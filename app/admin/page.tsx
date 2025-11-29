@@ -1,8 +1,29 @@
-import { redirect } from "next/navigation"
+import { MainLayout } from "@/components/layout/main-layout"
+import { StatsCard } from "@/components/reusable/stats-card"
+import {
+  Building2,
+  CalendarCheck,
+  TrendingUp,
+  DollarSign,
+  Users,
+  Clock,
+} from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { RevenueChart } from "@/components/reusable/revenue-chart"
+import { BookingSourceChart } from "@/components/reusable/booking-source-chart"
 
-export default function HomePage() {
-  redirect("/explore")
-}
+export default function AdminDashboardPage() {
+  return (
+    <MainLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>

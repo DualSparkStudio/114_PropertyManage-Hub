@@ -21,52 +21,52 @@ const menuItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
-    href: "/",
+    href: "/admin",
   },
   {
     title: "Properties",
     icon: Building2,
-    href: "/properties",
+    href: "/admin/properties",
   },
   {
     title: "Bookings",
     icon: CalendarCheck,
-    href: "/bookings",
+    href: "/admin/bookings",
   },
   {
     title: "Calendar",
     icon: Calendar,
-    href: "/calendar",
+    href: "/admin/calendar",
   },
   {
     title: "OTA Sync",
     icon: RefreshCw,
-    href: "/ota-sync",
+    href: "/admin/ota-sync",
   },
   {
     title: "Rooms",
     icon: DoorOpen,
-    href: "/rooms",
+    href: "/admin/rooms",
   },
   {
     title: "Finance",
     icon: DollarSign,
-    href: "/finance",
+    href: "/admin/finance",
   },
   {
     title: "Staff",
     icon: Users,
-    href: "/staff",
+    href: "/admin/staff",
   },
   {
     title: "Reports",
     icon: FileText,
-    href: "/reports",
+    href: "/admin/reports",
   },
   {
     title: "Settings",
     icon: Settings,
-    href: "/settings",
+    href: "/admin/settings",
   },
 ]
 

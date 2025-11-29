@@ -34,6 +34,7 @@ jobs:
 
       - name: Build with Next.js
         env:
+          NODE_ENV: 'production'
           GITHUB_PAGES: 'true'
           GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
         run: npm run build:gh-pages

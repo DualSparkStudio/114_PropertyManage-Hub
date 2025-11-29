@@ -60,8 +60,9 @@ Your site will be available at: `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/
 
 ```
 ├── app/                    # Next.js app router pages
-│   ├── page.tsx           # Dashboard
+│   ├── page.tsx           # Dashboard (home page)
 │   ├── properties/        # Properties pages
+│   │   └── [id]/          # Property detail pages
 │   ├── bookings/          # Bookings page
 │   ├── calendar/          # Calendar page
 │   ├── ota-sync/          # OTA Sync page
@@ -75,7 +76,9 @@ Your site will be available at: `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/
 │   ├── reusable/          # Reusable components
 │   └── ui/                # ShadCN UI components
 ├── lib/                   # Utility functions
-└── public/                # Static assets
+├── public/                # Static assets
+└── .github/
+    └── workflows/         # GitHub Actions workflows
 ```
 
 ## Pages Overview
@@ -136,6 +139,14 @@ Your site will be available at: `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/
 - Integration management
 - Brand customization
 
+### Reports
+- Revenue reports
+- Occupancy reports
+- Booking analysis
+- Guest reports
+- Financial reports
+- OTA performance reports
+
 ## Design System
 
 - **Colors**: Clean, modern palette with primary blue (#3b82f6)
@@ -152,11 +163,23 @@ Your site will be available at: `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/
 npm run build
 ```
 
+### Build for GitHub Pages
+
+```bash
+npm run build:gh-pages
+```
+
 ### Start Production Server
 
 ```bash
 npm start
 ```
+
+## Additional Documentation
+
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Detailed GitHub Pages deployment guide
+- [GITHUB_PAGES_SETUP.md](./GITHUB_PAGES_SETUP.md) - Quick setup guide
+- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues and solutions
 
 ## License
 

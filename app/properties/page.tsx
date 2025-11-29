@@ -1,3 +1,5 @@
+"use client"
+
 import { MainLayout } from "@/components/layout/main-layout"
 import { PageHeader } from "@/components/reusable/page-header"
 import { PropertyCard } from "@/components/reusable/property-card"

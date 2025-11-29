@@ -14,6 +14,7 @@ import {
   FileText,
   Settings,
   Home,
+  Globe,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -82,6 +83,16 @@ export function Sidebar() {
             PropertyManage
           </span>
         </div>
+      </div>
+      <div className="p-4 border-b border-border">
+        <Link
+          href="/explore"
+          target="_blank"
+          className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors w-full"
+        >
+          <Globe className="h-4 w-4" />
+          <span>View Website</span>
+        </Link>
       </div>
       <nav className="flex-1 space-y-1 p-4">
         {menuItems.map((item) => {

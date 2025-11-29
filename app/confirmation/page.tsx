@@ -44,7 +44,7 @@ export default function ConfirmationPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Total Amount</span>
-                <span className="font-semibold text-lg">$495</span>
+                <span className="font-semibold text-lg">₹495</span>
               </div>
             </div>
 

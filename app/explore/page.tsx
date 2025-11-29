@@ -19,6 +19,7 @@ import { MapPin, Bed, Star, Search } from "lucide-react"
 const properties = [
   {
     id: "1",
+    slug: "grand-hotel",
     name: "Grand Hotel",
     type: "Hotel",
     location: "New York, USA",
@@ -30,6 +31,7 @@ const properties = [
   },
   {
     id: "2",
+    slug: "beach-resort",
     name: "Beach Resort",
     type: "Resort",
     location: "Miami, USA",
@@ -41,6 +43,7 @@ const properties = [
   },
   {
     id: "3",
+    slug: "mountain-villa",
     name: "Mountain Villa",
     type: "Villa",
     location: "Aspen, USA",
@@ -52,6 +55,7 @@ const properties = [
   },
   {
     id: "4",
+    slug: "city-hotel",
     name: "City Hotel",
     type: "Hotel",
     location: "San Francisco, USA",
@@ -63,6 +67,7 @@ const properties = [
   },
   {
     id: "5",
+    slug: "lakeside-resort",
     name: "Lakeside Resort",
     type: "Resort",
     location: "Lake Tahoe, USA",
@@ -74,6 +79,7 @@ const properties = [
   },
   {
     id: "6",
+    slug: "desert-oasis",
     name: "Desert Oasis",
     type: "Resort",
     location: "Phoenix, USA",
@@ -108,6 +114,32 @@ export default function ExplorePage() {
           </div>
         </div>
       </header>
+
+      {/* Navigation Tabs */}
+      <div className="border-b bg-white sticky top-16 z-40">
+        <div className="container mx-auto px-6">
+          <nav className="flex items-center gap-8">
+            <Link href="/explore" className="py-4 border-b-2 border-primary text-primary font-medium">
+              Home
+            </Link>
+            <Link href="/explore/rooms" className="py-4 text-muted-foreground hover:text-foreground">
+              Rooms
+            </Link>
+            <Link href="/explore/attractions" className="py-4 text-muted-foreground hover:text-foreground">
+              Attractions
+            </Link>
+            <Link href="/explore/features" className="py-4 text-muted-foreground hover:text-foreground">
+              Features
+            </Link>
+            <Link href="/explore/about" className="py-4 text-muted-foreground hover:text-foreground">
+              About
+            </Link>
+            <Link href="/explore/contact" className="py-4 text-muted-foreground hover:text-foreground">
+              Contact
+            </Link>
+          </nav>
+        </div>
+      </div>
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-primary/10 to-primary/5 py-16">
@@ -205,7 +237,7 @@ export default function ExplorePage() {
                 </p>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-2xl font-bold">${property.price}</span>
+                    <span className="text-2xl font-bold">₹{property.price}</span>
                     <span className="text-sm text-muted-foreground">/night</span>
                   </div>
                   <span className="text-sm text-muted-foreground">
@@ -215,7 +247,7 @@ export default function ExplorePage() {
               </CardContent>
               <CardFooter className="p-6 pt-0">
                 <Button asChild className="w-full">
-                  <Link href={`/property/${property.id}`}>View Details</Link>
+                  <Link href={`/property/${property.slug}`}>View Details</Link>
                 </Button>
               </CardFooter>
             </Card>

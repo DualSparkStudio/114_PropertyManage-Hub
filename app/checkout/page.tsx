@@ -9,25 +9,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-
-const propertyData: Record<string, any> = {
-  "1": {
-    name: "Grand Hotel",
-    location: "New York, USA",
-    price: 150,
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
-  },
-}
+import { propertyData } from "../property/[id]/property-data"
 
 export default function CheckoutPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const propertyId = searchParams.get("property") || "1"
+  const propertySlug = searchParams.get("property") || "grand-hotel"
   const checkIn = searchParams.get("checkIn") || ""
   const checkOut = searchParams.get("checkOut") || ""
   const guests = Number(searchParams.get("guests")) || 2
 
-  const property = propertyData[propertyId] || propertyData["1"]
+  const property = propertyData[propertySlug] || propertyData["grand-hotel"]
   const nights = checkIn && checkOut
     ? Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24))
     : 0
@@ -140,7 +132,7 @@ export default function CheckoutPage() {
                   <div className="flex gap-4">
                     <div className="relative h-20 w-20 rounded-lg overflow-hidden">
                       <Image
-                        src={property.image}
+                        src={property.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800"}
                         alt={property.name}
                         fill
                         className="object-cover"
@@ -173,17 +165,17 @@ export default function CheckoutPage() {
                   <Separator />
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span>${property.price} x {nights} nights</span>
-                      <span>${subtotal}</span>
+                      <span>₹{property.price} x {nights} nights</span>
+                      <span>₹{subtotal}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Service fee</span>
-                      <span>${serviceFee}</span>
+                      <span>₹{serviceFee}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total</span>
-                      <span>${total}</span>
+                      <span>₹{total}</span>
                     </div>
                   </div>
                 </CardContent>

@@ -3,7 +3,15 @@ import { PageHeader } from "@/components/reusable/page-header"
 import { OTAStatusCard } from "@/components/reusable/ota-status-card"
 import { Card, CardContent } from "@/components/ui/card"
 
-const otaPlatforms = [
+type OTAPlatform = {
+  id: string
+  name: string
+  status: "connected" | "disconnected"
+  lastSync: string
+  icon: string
+}
+
+const otaPlatforms: OTAPlatform[] = [
   {
     id: "airbnb",
     name: "Airbnb",

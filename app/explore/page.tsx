@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, memo } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { OptimizedLink } from "@/components/optimized-link"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -91,8 +92,81 @@ const properties = [
   },
 ]
 
+// Memoized property card component
+const PropertyCard = memo(function PropertyCard({ property }: { property: any }) {
+  return (
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+      <div className="relative h-48 w-full">
+        <Image
+          src={property.image}
+          alt={property.name}
+          fill
+          className="object-cover"
+          loading="lazy"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          placeholder="blur"
+          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+        />
+        <div className="absolute top-4 right-4">
+          <Badge variant="secondary" className="bg-white/90">
+            {property.type}
+          </Badge>
+        </div>
+      </div>
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="text-xl font-semibold">{property.name}</h3>
+          <div className="flex items-center gap-1">
+            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            <span className="text-sm font-medium">{property.rating}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+          <MapPin className="h-4 w-4" />
+          <span>{property.location}</span>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+          {property.description}
+        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-2xl font-bold">₹{property.price}</span>
+            <span className="text-sm text-muted-foreground">/night</span>
+          </div>
+          <span className="text-sm text-muted-foreground">
+            {property.reviews} reviews
+          </span>
+        </div>
+      </CardContent>
+      <CardFooter className="p-6 pt-0">
+        <Button asChild className="w-full">
+          <OptimizedLink 
+            href={`/property/${property.slug}`} 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
+            View Details
+          </OptimizedLink>
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+})
+
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState("")
+  
+  // Memoize filtered properties
+  const filteredProperties = useMemo(() => {
+    if (!searchQuery) return properties
+    const query = searchQuery.toLowerCase()
+    return properties.filter(
+      (p) =>
+        p.name.toLowerCase().includes(query) ||
+        p.location.toLowerCase().includes(query) ||
+        p.description.toLowerCase().includes(query)
+    )
+  }, [searchQuery])
 
   return (
     <div className="min-h-screen bg-[#f7f7f8]">
@@ -103,43 +177,40 @@ export default function ExplorePage() {
             <Link href="/" className="text-2xl font-bold text-primary">
               PropertyManage
             </Link>
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/explore" className="text-sm font-medium hover:text-primary">
-                Explore
-              </Link>
-              <Link href="/admin" className="text-sm font-medium hover:text-primary">
-                Admin
-              </Link>
-            </nav>
+            <div className="flex items-center gap-8">
+              <nav className="hidden md:flex items-center gap-6">
+                <OptimizedLink href="/explore" className="py-2 border-b-2 border-primary text-primary font-medium">
+                  Home
+                </OptimizedLink>
+                <OptimizedLink href="/explore/rooms" className="py-2 text-muted-foreground hover:text-foreground">
+                  Rooms
+                </OptimizedLink>
+                <OptimizedLink href="/explore/attractions" className="py-2 text-muted-foreground hover:text-foreground">
+                  Attractions
+                </OptimizedLink>
+                <OptimizedLink href="/explore/features" className="py-2 text-muted-foreground hover:text-foreground">
+                  Features
+                </OptimizedLink>
+                <OptimizedLink href="/explore/about" className="py-2 text-muted-foreground hover:text-foreground">
+                  About
+                </OptimizedLink>
+                <OptimizedLink href="/explore/contact" className="py-2 text-muted-foreground hover:text-foreground">
+                  Contact
+                </OptimizedLink>
+              </nav>
+              <span className="hidden md:block text-muted-foreground">|</span>
+              <nav className="flex items-center gap-6">
+                <OptimizedLink href="/explore" className="text-sm font-medium hover:text-primary">
+                  Explore
+                </OptimizedLink>
+                <OptimizedLink href="/admin" className="text-sm font-medium hover:text-primary">
+                  Admin
+                </OptimizedLink>
+              </nav>
+            </div>
           </div>
         </div>
       </header>
-
-      {/* Navigation Tabs */}
-      <div className="border-b bg-white sticky top-16 z-40">
-        <div className="container mx-auto px-6">
-          <nav className="flex items-center gap-8">
-            <Link href="/explore" className="py-4 border-b-2 border-primary text-primary font-medium">
-              Home
-            </Link>
-            <Link href="/explore/rooms" className="py-4 text-muted-foreground hover:text-foreground">
-              Rooms
-            </Link>
-            <Link href="/explore/attractions" className="py-4 text-muted-foreground hover:text-foreground">
-              Attractions
-            </Link>
-            <Link href="/explore/features" className="py-4 text-muted-foreground hover:text-foreground">
-              Features
-            </Link>
-            <Link href="/explore/about" className="py-4 text-muted-foreground hover:text-foreground">
-              About
-            </Link>
-            <Link href="/explore/contact" className="py-4 text-muted-foreground hover:text-foreground">
-              Contact
-            </Link>
-          </nav>
-        </div>
-      </div>
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-primary/10 to-primary/5 py-16">
@@ -205,52 +276,8 @@ export default function ExplorePage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {properties.map((property) => (
-            <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="relative h-48 w-full">
-                <Image
-                  src={property.image}
-                  alt={property.name}
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute top-4 right-4">
-                  <Badge variant="secondary" className="bg-white/90">
-                    {property.type}
-                  </Badge>
-                </div>
-              </div>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-xl font-semibold">{property.name}</h3>
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm font-medium">{property.rating}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
-                  <MapPin className="h-4 w-4" />
-                  <span>{property.location}</span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                  {property.description}
-                </p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-2xl font-bold">₹{property.price}</span>
-                    <span className="text-sm text-muted-foreground">/night</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {property.reviews} reviews
-                  </span>
-                </div>
-              </CardContent>
-              <CardFooter className="p-6 pt-0">
-                <Button asChild className="w-full">
-                  <Link href={`/property/${property.slug}`}>View Details</Link>
-                </Button>
-              </CardFooter>
-            </Card>
+          {filteredProperties.map((property) => (
+            <PropertyCard key={property.id} property={property} />
           ))}
         </div>
       </section>

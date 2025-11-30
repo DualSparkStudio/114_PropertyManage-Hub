@@ -37,3 +37,78 @@
   }
 }
 
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Optimize image loading */
+img {
+  content-visibility: auto;
+}
+
+/* Smooth transitions */
+a {
+  transition: opacity 0.15s ease-in-out;
+  will-change: opacity;
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+/* Optimize font loading */
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+}
+
+/* Performance optimizations */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reduce layout shifts */
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Optimize rendering */
+.container {
+  contain: layout style paint;
+}
+
+/* GPU acceleration for animations */
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Optimize scroll performance */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Reduce repaints */
+.card, .button {
+  will-change: transform;
+  transform: translateZ(0);
+}
+

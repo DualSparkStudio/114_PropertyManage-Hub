@@ -91,7 +91,8 @@ export function PropertyHomeClient({ propertySlug }: PropertyHomeClientProps) {
                 <Phone className="h-4 w-4" />
                 <span className="hidden sm:inline">Contact</span>
               </Link>
-              <div className="hidden md:flex items-center gap-4 ml-4 pl-4 border-l">
+              <span className="hidden md:block text-muted-foreground">|</span>
+              <div className="hidden md:flex items-center gap-6">
                 <Link href="/explore" className="text-sm font-medium hover:text-primary">
                   Explore
                 </Link>

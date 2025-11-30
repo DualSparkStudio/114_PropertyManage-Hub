@@ -265,7 +265,7 @@ export function PropertyHomeClient({ propertySlug }: PropertyHomeClientProps) {
                   Book Now
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">
-                  You won't be charged yet
+                  You won&apos;t be charged yet
                 </p>
               </CardContent>
             </Card>

@@ -79,9 +79,9 @@ export default function AboutPage() {
             <CardContent>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                 <li>AAA Five Diamond Award</li>
-                <li>Travel + Leisure World's Best</li>
-                <li>Conde Nast Readers' Choice</li>
-                <li>TripAdvisor Travelers' Choice</li>
+                <li>Travel + Leisure World&apos;s Best</li>
+                <li>Conde Nast Readers&apos; Choice</li>
+                <li>TripAdvisor Travelers&apos; Choice</li>
               </ul>
             </CardContent>
           </Card>
@@ -92,7 +92,7 @@ export default function AboutPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                To provide exceptional hospitality experiences that exceed our guests' expectations while maintaining 
+                To provide exceptional hospitality experiences that exceed our guests&apos; expectations while maintaining 
                 the highest standards of service, comfort, and sustainability. We strive to create memorable stays 
                 that guests will cherish for a lifetime.
               </p>

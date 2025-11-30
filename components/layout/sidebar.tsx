@@ -27,47 +27,47 @@ const menuItems = [
   {
     title: "Properties",
     icon: Building2,
-    href: "/admin/properties",
+    href: "/properties",
   },
   {
     title: "Bookings",
     icon: CalendarCheck,
-    href: "/admin/bookings",
+    href: "/bookings",
   },
   {
     title: "Calendar",
     icon: Calendar,
-    href: "/admin/calendar",
+    href: "/calendar",
   },
   {
     title: "OTA Sync",
     icon: RefreshCw,
-    href: "/admin/ota-sync",
+    href: "/ota-sync",
   },
   {
     title: "Rooms",
     icon: DoorOpen,
-    href: "/admin/rooms",
+    href: "/rooms",
   },
   {
     title: "Finance",
     icon: DollarSign,
-    href: "/admin/finance",
+    href: "/finance",
   },
   {
     title: "Staff",
     icon: Users,
-    href: "/admin/staff",
+    href: "/staff",
   },
   {
     title: "Reports",
     icon: FileText,
-    href: "/admin/reports",
+    href: "/reports",
   },
   {
     title: "Settings",
     icon: Settings,
-    href: "/admin/settings",
+    href: "/settings",
   },
 ]
 
@@ -97,7 +97,7 @@ export function Sidebar() {
       <nav className="flex-1 space-y-1 p-4">
         {menuItems.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
           return (
             <Link
               key={item.href}

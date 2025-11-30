@@ -1,3 +1,5 @@
+"use client"
+
 import { MainLayout } from "@/components/layout/main-layout"
 import { StatsCard } from "@/components/reusable/stats-card"
 import {

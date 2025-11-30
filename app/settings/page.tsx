@@ -1,3 +1,5 @@
+"use client"
+
 import { MainLayout } from "@/components/layout/main-layout"
 import { PageHeader } from "@/components/reusable/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"

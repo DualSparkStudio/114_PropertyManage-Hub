@@ -40,7 +40,7 @@ jobs:
         run: |
           echo "Building for GitHub Pages..."
           echo "Repository name: ${{ github.event.repository.name }}"
-          NODE_ENV=production GITHUB_PAGES=true next build
+          npx next build
           
       - name: Verify build output
         run: |

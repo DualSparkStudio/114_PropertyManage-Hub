@@ -16,8 +16,6 @@ const nextConfig = {
   },
   // Optimize bundle
   swcMinify: true,
-  // Enable compression
-  compress: true,
   // Optimize fonts
   optimizeFonts: true,
   // Experimental features for better performance

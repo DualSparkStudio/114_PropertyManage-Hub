@@ -2,16 +2,23 @@ import { PropertyHomeClient } from "./property-home-client"
 
 // Generate static params for static export
 export async function generateStaticParams() {
-  return [
-    { id: 'grand-hotel' },
-    { id: 'beach-resort' },
-    { id: 'mountain-villa' },
-    { id: 'city-hotel' },
-    { id: 'lakeside-resort' },
-    { id: 'desert-oasis' },
+  // Only return valid property slugs to prevent routing conflicts
+  const validSlugs = [
+    'grand-hotel',
+    'beach-resort',
+    'mountain-villa',
+    'city-hotel',
+    'lakeside-resort',
+    'desert-oasis',
   ]
+  
+  return validSlugs.map((slug) => ({ id: slug }))
 }
 
 export default function PropertyPage({ params }: { params: { id: string } }) {
-  return <PropertyHomeClient propertySlug={params.id} />
+  // Validate that the slug is a valid property slug
+  const validSlugs = ['grand-hotel', 'beach-resort', 'mountain-villa', 'city-hotel', 'lakeside-resort', 'desert-oasis']
+  const slug = validSlugs.includes(params.id) ? params.id : 'grand-hotel'
+  
+  return <PropertyHomeClient propertySlug={slug} />
 }

@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { LoadingBar } from "@/components/loading-bar";
 import { GitHubPagesScript } from "@/components/github-pages-script";
+import { PrefetchHead } from "@/components/prefetch-head";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -26,16 +27,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
-        <link rel="prefetch" href="/explore" />
-        <link rel="prefetch" href="/explore/rooms" />
-        <link rel="prefetch" href="/explore/attractions" />
-        <link rel="prefetch" href="/explore/features" />
-        <link rel="prefetch" href="/explore/about" />
-        <link rel="prefetch" href="/explore/contact" />
-        <link rel="prefetch" href="/admin" />
-        <script src="/prefetch.js" defer></script>
       </head>
       <body className={inter.className}>
+        <PrefetchHead />
         <GitHubPagesScript />
         <LoadingBar />
         {children}

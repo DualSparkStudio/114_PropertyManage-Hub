@@ -6,8 +6,8 @@ export const loadPropertyData = async () => {
     return propertyDataCache
   }
 
-  const module = await import('@/lib/data/property-data')
-  const propertyData = module.propertyData || module.default
+  const dataModule = await import('@/lib/data/property-data')
+  const propertyData = dataModule.propertyData || dataModule.default
   propertyDataCache = propertyData
   return propertyData
 }

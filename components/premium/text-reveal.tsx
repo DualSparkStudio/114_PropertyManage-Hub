@@ -1,7 +1,20 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { motion, useInView } from "framer-motion"
+
+// Dynamic import for framer-motion to handle missing package gracefully
+let motion: any
+let useInView: any
+
+try {
+  const fm = require("framer-motion")
+  motion = fm.motion
+  useInView = fm.useInView
+} catch {
+  // Fallback if framer-motion is not installed
+  motion = { div: ({ children, ...props }: any) => <div {...props}>{children}</div> }
+  useInView = () => [null, false]
+}
 
 interface TextRevealProps {
   children: React.ReactNode
@@ -19,7 +32,28 @@ export function TextReveal({
   direction = "up",
 }: TextRevealProps) {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
+  const [isInView, setIsInView] = useState(false)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true)
+        }
+      },
+      { threshold: 0.1, rootMargin: "-100px" }
+    )
+
+    if (ref.current) {
+      observer.observe(ref.current)
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current)
+      }
+    }
+  }, [])
 
   const directions = {
     up: { y: 50, opacity: 0 },
@@ -28,8 +62,10 @@ export function TextReveal({
     right: { x: -50, opacity: 0 },
   }
 
+  const MotionDiv = motion.div
+
   return (
-    <motion.div
+    <MotionDiv
       ref={ref}
       initial={directions[direction]}
       animate={isInView ? { x: 0, y: 0, opacity: 1 } : directions[direction]}
@@ -41,7 +77,7 @@ export function TextReveal({
       className={className}
     >
       {children}
-    </motion.div>
+    </MotionDiv>
   )
 }
 
@@ -56,12 +92,35 @@ export function CharReveal({
   delay?: number
 }) {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-50px" })
+  const [isInView, setIsInView] = useState(false)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true)
+        }
+      },
+      { threshold: 0.1, rootMargin: "-50px" }
+    )
+
+    if (ref.current) {
+      observer.observe(ref.current)
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current)
+      }
+    }
+  }, [])
+
+  const MotionSpan = motion.span
 
   return (
     <span ref={ref} className={className}>
       {text.split("").map((char, i) => (
-        <motion.span
+        <MotionSpan
           key={i}
           initial={{ opacity: 0, y: 20 }}
           animate={
@@ -77,9 +136,8 @@ export function CharReveal({
           style={{ display: "inline-block" }}
         >
           {char === " " ? "\u00A0" : char}
-        </motion.span>
+        </MotionSpan>
       ))}
     </span>
   )
 }
-

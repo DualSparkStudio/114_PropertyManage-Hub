@@ -1,16 +1,17 @@
 "use client"
 
+import { ReactNode, MouseEvent } from "react"
 import { useRouter } from "next/navigation"
-import { ReactNode, MouseEvent, useTransition } from "react"
+import { useTransition } from "react"
 
 /**
- * ROOT FIX: OptimizedLink for Static Export
+ * Static Export Compatible Link Component
  * 
- * Uses regular anchor tags instead of Next.js Link to avoid RSC prefetching.
- * Next.js Link with prefetch tries to fetch RSC data that doesn't exist in static export.
- * This component provides the same functionality without RSC dependencies.
+ * ROOT FIX: This component doesn't use Next.js Link's prefetching
+ * which tries to fetch RSC data that doesn't exist in static export.
+ * Instead, it uses regular anchor tags with client-side navigation.
  */
-interface OptimizedLinkProps {
+interface StaticLinkProps {
   href: string
   children: ReactNode
   className?: string
@@ -19,14 +20,14 @@ interface OptimizedLinkProps {
   onClick?: (e: MouseEvent<HTMLAnchorElement>) => void
 }
 
-export function OptimizedLink({
+export function StaticLink({
   href,
   children,
   className,
   target,
   rel,
   onClick,
-}: OptimizedLinkProps) {
+}: StaticLinkProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -48,8 +49,6 @@ export function OptimizedLink({
     if (onClick) onClick(e)
   }
 
-  // ROOT FIX: Use regular anchor tag instead of Next.js Link
-  // This prevents Next.js from trying to fetch RSC data
   return (
     <a
       href={href}

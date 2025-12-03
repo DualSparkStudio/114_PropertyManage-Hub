@@ -35,12 +35,7 @@ export function PrefetchHead() {
       document.head.appendChild(link)
     })
     
-    // Add scripts
-    const suppressScript = document.createElement('script')
-    suppressScript.src = `${basePath}/suppress-rsc-errors.js`
-    suppressScript.defer = true
-    document.head.appendChild(suppressScript)
-    
+    // Add prefetch script
     const prefetchScript = document.createElement('script')
     prefetchScript.src = `${basePath}/prefetch.js`
     prefetchScript.defer = true
@@ -57,10 +52,6 @@ export function PrefetchHead() {
       const existingPrefetchScript = document.querySelector(`script[src="${basePath}/prefetch.js"]`)
       if (existingPrefetchScript) {
         existingPrefetchScript.remove()
-      }
-      const existingSuppressScript = document.querySelector(`script[src="${basePath}/suppress-rsc-errors.js"]`)
-      if (existingSuppressScript) {
-        existingSuppressScript.remove()
       }
     }
   }, [])

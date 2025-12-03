@@ -1,7 +1,7 @@
 "use client"
 
-import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { StaticLink } from "@/components/static-link"
 import {
   LayoutDashboard,
   Building2,
@@ -96,7 +96,7 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
         </div>
       </div>
       <div className="p-4 border-b border-border">
-        <Link
+        <StaticLink
           href="/explore"
           target="_blank"
           onClick={onLinkClick}
@@ -104,14 +104,14 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
         >
           <Globe className="h-4 w-4" />
           <span>View Website</span>
-        </Link>
+        </StaticLink>
       </div>
       <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
           return (
-            <Link
+            <StaticLink
               key={item.href}
               href={item.href}
               onClick={onLinkClick}
@@ -124,7 +124,7 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
             >
               <Icon className="h-5 w-5" />
               <span>{item.title}</span>
-            </Link>
+            </StaticLink>
           )
         })}
       </nav>

@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import { 
   Home, 
   Building2, 
@@ -135,52 +134,52 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-foreground">Services</h3>
             <ul className="space-y-2">
               <li>
-                <Link
+                <OptimizedLink
                   href="/admin"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Property Management
-                </Link>
+                </OptimizedLink>
               </li>
               <li>
-                <Link
+                <OptimizedLink
                   href="/bookings"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Booking Management
-                </Link>
+                </OptimizedLink>
               </li>
               <li>
-                <Link
+                <OptimizedLink
                   href="/calendar"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Calendar View
-                </Link>
+                </OptimizedLink>
               </li>
               <li>
-                <Link
+                <OptimizedLink
                   href="/ota-sync"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   OTA Integration
-                </Link>
+                </OptimizedLink>
               </li>
               <li>
-                <Link
+                <OptimizedLink
                   href="/finance"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Financial Reports
-                </Link>
+                </OptimizedLink>
               </li>
               <li>
-                <Link
+                <OptimizedLink
                   href="/reports"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Analytics & Reports
-                </Link>
+                </OptimizedLink>
               </li>
             </ul>
           </div>
@@ -236,24 +235,24 @@ export function Footer() {
               © {currentYear} PropertyManage Hub. All rights reserved.
             </p>
             <div className="flex items-center gap-6 text-sm">
-              <Link
+              <OptimizedLink
                 href="/explore/about"
                 className="text-muted-foreground hover:text-primary transition-colors"
               >
                 Privacy Policy
-              </Link>
-              <Link
+              </OptimizedLink>
+              <OptimizedLink
                 href="/explore/about"
                 className="text-muted-foreground hover:text-primary transition-colors"
               >
                 Terms of Service
-              </Link>
-              <Link
+              </OptimizedLink>
+              <OptimizedLink
                 href="/explore/contact"
                 className="text-muted-foreground hover:text-primary transition-colors"
               >
                 Support
-              </Link>
+              </OptimizedLink>
             </div>
           </div>
           <div className="mt-6 pt-6 border-t border-border">

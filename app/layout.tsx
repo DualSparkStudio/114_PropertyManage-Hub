@@ -7,6 +7,7 @@ import { PrefetchHead } from "@/components/prefetch-head";
 import { CustomCursor } from "@/components/premium/custom-cursor";
 import { SmoothScroll } from "@/components/premium/smooth-scroll";
 import { BlurredBlobs, GradientNoise } from "@/components/premium/background-effects";
+import { AOSInit } from "@/components/premium/aos-init";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -36,9 +37,11 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
       </head>
       <body className={inter.className}>
         <SmoothScroll>
+          <AOSInit />
           <CustomCursor />
           <GradientNoise />
           <BlurredBlobs />

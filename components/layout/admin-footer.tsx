@@ -29,6 +29,19 @@ export function AdminFooter() {
             </a>
           </div>
         </div>
+        <div className="mt-4 pt-4 border-t border-border">
+          <p className="text-xs text-muted-foreground text-center">
+            Design & developed by{" "}
+            <a
+              href="https://dualsparkstudio.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-medium transition-colors"
+            >
+              DualSpark Studio
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   )

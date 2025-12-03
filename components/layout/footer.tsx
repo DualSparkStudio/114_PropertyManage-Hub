@@ -256,6 +256,19 @@ export function Footer() {
               </Link>
             </div>
           </div>
+          <div className="mt-6 pt-6 border-t border-border">
+            <p className="text-sm text-muted-foreground text-center">
+              Design & developed by{" "}
+              <a
+                href="https://dualsparkstudio.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium transition-colors"
+              >
+                DualSpark Studio
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </footer>

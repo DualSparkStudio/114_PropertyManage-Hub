@@ -31,10 +31,34 @@ export function StaticLink({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  // Get base path for GitHub Pages (works for both dev and production)
-  const basePath = useMemo(() => {
-    if (typeof window === "undefined") return ""
+  // Normalize href with trailing slash for static export
+  // DO NOT add base path - Next.js basePath config handles it automatically
+  const normalizedHref = useMemo(() => {
+    // Don't modify external URLs
+    if (href.startsWith("http://") || href.startsWith("https://") || href.startsWith("mailto:") || href.startsWith("#")) {
+      return href
+    }
     
+    // Add trailing slash for static export (except for hash links)
+    let finalHref = href
+    if (!finalHref.includes("#") && !finalHref.endsWith("/")) {
+      finalHref += "/"
+    }
+    
+    return finalHref
+  }, [href])
+
+  // Get base path ONLY for href attribute (not for router.push)
+  // Next.js router.push() automatically handles basePath, but href needs it manually
+  const hrefWithBasePath = useMemo(() => {
+    if (typeof window === "undefined") return normalizedHref
+    
+    // Don't modify external URLs
+    if (normalizedHref.startsWith("http://") || normalizedHref.startsWith("https://") || normalizedHref.startsWith("mailto:") || normalizedHref.startsWith("#")) {
+      return normalizedHref
+    }
+    
+    // Get base path from current location
     const pathname = window.location.pathname
     const pathParts = pathname.split('/').filter(Boolean)
     
@@ -47,34 +71,17 @@ export function StaticLink({
     
     // If first path segment is a known route, we're in dev mode (no base path)
     if (pathParts.length > 0 && knownRoutes.includes(pathParts[0])) {
-      return ""
+      return normalizedHref
     }
     
     // Otherwise, first segment is likely the base path (GitHub Pages)
-    if (pathParts.length > 0) {
-      return `/${pathParts[0]}`
+    // Only add if href doesn't already start with it
+    if (pathParts.length > 0 && !normalizedHref.startsWith(`/${pathParts[0]}`)) {
+      return `/${pathParts[0]}${normalizedHref}`
     }
     
-    return ""
-  }, [])
-
-  // Normalize href with base path and trailing slash for static export
-  const normalizedHref = useMemo(() => {
-    // Don't modify external URLs
-    if (href.startsWith("http://") || href.startsWith("https://") || href.startsWith("mailto:") || href.startsWith("#")) {
-      return href
-    }
-    
-    // Add base path if needed
-    let finalHref = basePath ? `${basePath}${href}` : href
-    
-    // Add trailing slash for static export (except for hash links)
-    if (!finalHref.includes("#") && !finalHref.endsWith("/")) {
-      finalHref += "/"
-    }
-    
-    return finalHref
-  }, [href, basePath])
+    return normalizedHref
+  }, [normalizedHref])
 
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
     // If target is _blank, let browser handle it (but with correct href)
@@ -87,6 +94,7 @@ export function StaticLink({
     e.preventDefault()
     
     // Use transition for smooth navigation
+    // router.push() automatically handles basePath, so use normalizedHref (without base path)
     startTransition(() => {
       router.push(normalizedHref)
     })
@@ -96,7 +104,7 @@ export function StaticLink({
 
   return (
     <a
-      href={normalizedHref}
+      href={hrefWithBasePath}
       className={className}
       target={target}
       rel={rel}

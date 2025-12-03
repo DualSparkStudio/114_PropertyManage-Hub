@@ -24,8 +24,22 @@
   
   // Prefetch links on mouseenter with delay
   document.addEventListener('DOMContentLoaded', function() {
-    // Get base path for GitHub Pages
-    const basePath = window.location.pathname.split('/').slice(0, 2).join('/') || '';
+    // Get base path for GitHub Pages - check if we're on GitHub Pages
+    const pathname = window.location.pathname;
+    const pathParts = pathname.split('/').filter(Boolean);
+    
+    // Known routes that indicate we're NOT on GitHub Pages
+    const knownRoutes = [
+      'explore', 'admin', 'property', 'bookings', 'calendar', 
+      'ota-sync', 'rooms', 'finance', 'staff', 'reports', 
+      'settings', 'properties', 'checkout', 'confirmation'
+    ];
+    
+    // Determine base path - only add if first segment is NOT a known route
+    let basePath = '';
+    if (pathParts.length > 0 && !knownRoutes.includes(pathParts[0])) {
+      basePath = '/' + pathParts[0];
+    }
     
     const links = document.querySelectorAll('a[href^="/"]');
     const timeouts = new Map();
@@ -43,7 +57,11 @@
       }
       
       // Normalize href with base path and ensure trailing slash for static export
-      let normalizedHref = basePath ? basePath + href : href;
+      // Only add base path if href doesn't already start with it
+      let normalizedHref = href;
+      if (basePath && !href.startsWith(basePath)) {
+        normalizedHref = basePath + href;
+      }
       if (!normalizedHref.endsWith('/') && !normalizedHref.includes('#')) {
         normalizedHref += '/';
       }

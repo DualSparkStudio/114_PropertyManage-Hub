@@ -77,7 +77,9 @@ export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-6">
               {navItems.map((item) => {
-                const Icon = variant === "property" && "icon" in item ? iconMap[item.icon] : null
+                const Icon = variant === "property" && "icon" in item && typeof item.icon === "string" 
+                  ? iconMap[item.icon as keyof typeof iconMap] 
+                  : null
                 return (
                   <OptimizedLink
                     key={item.href}
@@ -128,7 +130,9 @@ export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
                 </SheetHeader>
                 <nav className="flex flex-col gap-4 mt-6">
                   {navItems.map((item) => {
-                    const Icon = variant === "property" && "icon" in item ? iconMap[item.icon] : null
+                    const Icon = variant === "property" && "icon" in item && typeof item.icon === "string"
+                      ? iconMap[item.icon as keyof typeof iconMap]
+                      : null
                     return (
                       <OptimizedLink
                         key={item.href}

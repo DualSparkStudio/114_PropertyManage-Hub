@@ -71,79 +71,37 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
-// Fetch event - serve from cache, fallback to network
+// DISABLED FETCH EVENT HANDLER TO PREVENT 404 ERRORS
+// Service worker fetch handler was causing 404 errors
+// For static export, we bypass service worker for navigation requests
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
+  // Skip all navigation requests - let browser handle them directly
+  // This prevents service worker from interfering with routing
+  if (event.request.mode === 'navigate') {
+    return // Let browser handle navigation
+  }
+
+  // Only handle non-navigation requests (assets, images, etc.)
   if (event.request.method !== 'GET') return
-
-  // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) return
-
-  // Skip RSC data requests (they don't exist in static export)
   if (event.request.url.includes('_rsc=') || event.request.url.includes('index.txt')) {
     return
   }
 
-  // Normalize request URL for GitHub Pages
-  const url = new URL(event.request.url)
-  const originalPath = url.pathname
-  
-  // Add base path if needed
-  if (BASE_PATH && !url.pathname.startsWith(BASE_PATH)) {
-    url.pathname = BASE_PATH + url.pathname
-  }
-
+  // For assets, try network first, then cache
   event.respondWith(
-    caches.match(url).then((cachedResponse) => {
-      // If we have a cached response, check if it's valid
-      if (cachedResponse) {
-        // Don't serve cached 404s - always try network first for navigation requests
-        if (cachedResponse.status === 404 && event.request.mode === 'navigate') {
-          // Try network first for navigation requests
-          return fetch(event.request).then((networkResponse) => {
-            // If network succeeds, cache it
-            if (networkResponse && networkResponse.status === 200) {
-              const responseToCache = networkResponse.clone()
-              caches.open(RUNTIME_CACHE).then((cache) => {
-                cache.put(url, responseToCache)
-              })
-            }
-            return networkResponse
-          }).catch(() => {
-            // If network fails, return cached response
-            return cachedResponse
-          })
-        }
-        return cachedResponse
-      }
-
-      // No cache, try network
-      return fetch(event.request).then((response) => {
-        // Don't cache 404s or invalid responses
-        if (!response || response.status === 404 || response.status !== 200 || response.type !== 'basic') {
-          return response
-        }
-
-        // Clone the response
+    fetch(event.request).then((response) => {
+      // Only cache successful responses
+      if (response && response.status === 200 && response.type === 'basic') {
         const responseToCache = response.clone()
-
-        // Cache the response
         caches.open(RUNTIME_CACHE).then((cache) => {
-          cache.put(url, responseToCache)
+          cache.put(event.request, responseToCache)
         })
-
-        return response
-      }).catch((error) => {
-        // Network error - try to serve from cache even if it's a 404
-        // This prevents showing network errors when offline
-        return caches.match(url).then((fallbackResponse) => {
-          if (fallbackResponse) {
-            return fallbackResponse
-          }
-          // Return a basic 404 response if nothing is cached
-          return new Response('Not Found', { status: 404, statusText: 'Not Found' })
-        })
-      })
+      }
+      return response
+    }).catch(() => {
+      // If network fails, try cache
+      return caches.match(event.request)
     })
   )
 })

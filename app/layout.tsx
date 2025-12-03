@@ -4,6 +4,9 @@ import "./globals.css";
 import { LoadingBar } from "@/components/loading-bar";
 import { GitHubPagesScript } from "@/components/github-pages-script";
 import { PrefetchHead } from "@/components/prefetch-head";
+import { CustomCursor } from "@/components/premium/custom-cursor";
+import { SmoothScroll } from "@/components/premium/smooth-scroll";
+import { BlurredBlobs, GradientNoise } from "@/components/premium/background-effects";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -35,10 +38,15 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
       <body className={inter.className}>
-        <PrefetchHead />
-        <GitHubPagesScript />
-        <LoadingBar />
-        {children}
+        <SmoothScroll>
+          <CustomCursor />
+          <GradientNoise />
+          <BlurredBlobs />
+          <PrefetchHead />
+          <GitHubPagesScript />
+          <LoadingBar />
+          {children}
+        </SmoothScroll>
       </body>
     </html>
   );

@@ -65,7 +65,8 @@ export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
   return (
     <header className="sticky top-0 z-50 border-b bg-white backdrop-blur-sm bg-white/95">
       <div className="container mx-auto px-4 md:px-6 py-4">
-        <div className="flex items-center justify-between">
+        {/* First Row: PropertyManage, Explore, Admin */}
+        <div className="flex items-center justify-between mb-3 md:mb-0">
           <OptimizedLink 
             href={variant === "explore" ? "/explore" : `/property/${propertySlug}`}
             className="text-xl md:text-2xl font-bold text-primary hover:opacity-80 transition-opacity"
@@ -73,34 +74,8 @@ export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
             PropertyManage
           </OptimizedLink>
           
-          <div className="flex items-center gap-4 md:gap-8">
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-6">
-              {navItems.map((item) => {
-                const Icon = variant === "property" && "icon" in item && typeof item.icon === "string" 
-                  ? iconMap[item.icon as keyof typeof iconMap] 
-                  : null
-                return (
-                  <OptimizedLink
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-2 py-2 px-3 text-sm font-medium transition-colors",
-                      isActive(item.href)
-                        ? "border-b-2 border-primary text-primary"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {Icon && <Icon className="h-4 w-4" />}
-                    <span>{item.label}</span>
-                  </OptimizedLink>
-                )
-              })}
-            </nav>
-
-            <span className="hidden md:block text-muted-foreground">|</span>
-
-            {/* Quick Links - Admin prominently on the right */}
+          <div className="flex items-center gap-4 md:gap-6">
+            {/* Quick Links - Explore and Admin on the right */}
             <nav className="hidden sm:flex items-center gap-4 md:gap-6">
               <OptimizedLink 
                 href="/explore" 
@@ -171,6 +146,52 @@ export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
             </Sheet>
           </div>
         </div>
+
+        {/* Second Row: Property Navigation Items (only for property pages) */}
+        {variant === "property" && (
+          <nav className="hidden md:flex items-center gap-6 pt-2 border-t border-border/50">
+            {navItems.map((item) => {
+              const Icon = "icon" in item && typeof item.icon === "string" 
+                ? iconMap[item.icon as keyof typeof iconMap] 
+                : null
+              return (
+                <OptimizedLink
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-2 py-2 px-3 text-sm font-medium transition-colors",
+                    isActive(item.href)
+                      ? "border-b-2 border-primary text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {Icon && <Icon className="h-4 w-4" />}
+                  <span>{item.label}</span>
+                </OptimizedLink>
+              )
+            })}
+          </nav>
+        )}
+
+        {/* For explore pages, show navigation inline */}
+        {variant === "explore" && (
+          <nav className="hidden md:flex items-center gap-6 pt-2 border-t border-border/50">
+            {navItems.map((item) => (
+              <OptimizedLink
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "py-2 text-sm font-medium transition-colors",
+                  isActive(item.href)
+                    ? "border-b-2 border-primary text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {item.label}
+              </OptimizedLink>
+            ))}
+          </nav>
+        )}
       </div>
     </header>
   )

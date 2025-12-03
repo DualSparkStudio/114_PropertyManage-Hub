@@ -1,14 +1,35 @@
 "use client"
 
 import { useEffect } from "react"
+import { usePathname } from "next/navigation"
 
 export function SmoothScroll({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  
   useEffect(() => {
     if (typeof window === "undefined") return
 
+    // Disable Lenis for admin pages (they have their own scroll containers)
+    const isAdminPage = pathname?.startsWith("/admin") || 
+                       pathname?.startsWith("/bookings") ||
+                       pathname?.startsWith("/calendar") ||
+                       pathname?.startsWith("/ota-sync") ||
+                       pathname?.startsWith("/rooms") ||
+                       pathname?.startsWith("/finance") ||
+                       pathname?.startsWith("/staff") ||
+                       pathname?.startsWith("/reports") ||
+                       pathname?.startsWith("/settings") ||
+                       pathname?.startsWith("/properties")
+
+    if (isAdminPage) {
+      // For admin pages, use native scrolling
+      document.documentElement.style.scrollBehavior = "auto"
+      return
+    }
+
     let lenis: any
 
-    // Try to initialize Lenis
+    // Try to initialize Lenis for public pages only
     try {
       const Lenis = require("lenis")
       lenis = new Lenis.default({
@@ -18,7 +39,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
         gestureOrientation: "vertical",
         smoothWheel: true,
         wheelMultiplier: 1,
-        smoothTouch: false,
+        smoothTouch: false, // Disable smooth touch on mobile to prevent conflicts
         touchMultiplier: 2,
         infinite: false,
       })
@@ -48,7 +69,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
         document.documentElement.style.scrollBehavior = "auto"
       }
     }
-  }, [])
+  }, [pathname])
 
   return <>{children}</>
 }

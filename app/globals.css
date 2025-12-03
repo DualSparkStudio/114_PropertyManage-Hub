@@ -286,6 +286,22 @@ html {
   }
 }
 
+/* Admin Layout Mobile Scrolling Fix */
+@layer base {
+  /* Ensure admin main container scrolls properly on mobile */
+  main[data-lenis-prevent] {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    scroll-behavior: smooth;
+  }
+  
+  /* Prevent body scroll when admin layout is active */
+  body:has(main[data-lenis-prevent]) {
+    overflow: hidden;
+    height: 100vh;
+  }
+}
+
 /* Premium Typography */
 @layer base {
   .font-display {

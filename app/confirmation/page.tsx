@@ -12,7 +12,7 @@ function ConfirmationContent() {
   const bookingId = searchParams.get("bookingId") || "12345"
 
   return (
-    <div className="min-h-screen bg-[#f7f7f8] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="max-w-2xl w-full">
         <Card>
           <CardContent className="p-8 text-center">
@@ -72,7 +72,7 @@ function ConfirmationContent() {
 export default function ConfirmationPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#f7f7f8] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading confirmation...</p>

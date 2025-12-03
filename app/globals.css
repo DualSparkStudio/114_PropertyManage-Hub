@@ -4,25 +4,38 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 222.2 84% 4.9%;
+    /* Premium Neutral Luxury Palette */
+    --background: 0 0% 99%;
+    --foreground: 240 10% 8%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 10% 8%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --popover-foreground: 240 10% 8%;
+    
+    /* Premium Primary - Deep Indigo/Blue */
+    --primary: 230 75% 55%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Premium Secondary - Soft Lavender */
+    --secondary: 260 20% 95%;
+    --secondary-foreground: 240 10% 15%;
+    
+    /* Premium Muted - Warm Gray */
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    
+    /* Premium Accent - Gold/Amber */
+    --accent: 43 96% 56%;
+    --accent-foreground: 240 10% 8%;
+    
+    /* Destructive - Soft Red */
+    --destructive: 0 72% 58%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders - Subtle Gray */
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 230 75% 55%;
     --radius: 1rem;
   }
 }
@@ -32,8 +45,20 @@
     @apply border-border;
   }
   body {
-    @apply bg-[#f7f7f8] text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    @apply bg-[#fafafa] text-foreground;
+    font-family: var(--font-dm-sans), var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    letter-spacing: 0.01em;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-playfair), var(--font-dm-sans), serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: hsl(240 10% 8%);
+  }
+  
+  h1 {
+    letter-spacing: -0.03em;
   }
 }
 
@@ -115,7 +140,7 @@ html {
 /* Premium Typography */
 @layer utilities {
   .text-premium {
-    color: #111;
+    color: hsl(240 10% 8%);
     letter-spacing: 0.5px;
     font-weight: 500;
   }
@@ -123,12 +148,13 @@ html {
   .text-premium-large {
     font-size: clamp(2.5rem, 5vw, 4rem);
     line-height: 1.1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     font-weight: 700;
+    font-family: var(--font-playfair), serif;
   }
   
   .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)) 50%, #9333ea);
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -137,6 +163,12 @@ html {
   .text-stroke {
     -webkit-text-stroke: 1px currentColor;
     -webkit-text-fill-color: transparent;
+  }
+  
+  .text-luxury {
+    font-family: var(--font-playfair), serif;
+    letter-spacing: -0.01em;
+    color: hsl(240 10% 8%);
   }
 }
 
@@ -254,16 +286,14 @@ html {
   }
 }
 
-/* Cursor Styles */
+/* Premium Typography */
 @layer base {
-  * {
-    cursor: none;
+  .font-display {
+    font-family: var(--font-playfair), serif;
   }
   
-  @media (max-width: 768px) {
-    * {
-      cursor: auto;
-    }
+  .font-body {
+    font-family: var(--font-dm-sans), sans-serif;
   }
 }
 

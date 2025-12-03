@@ -30,7 +30,7 @@ export function PropertyContactClient({ propertySlug }: PropertyContactClientPro
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f7f8]">
+    <div className="min-h-screen bg-background">
       {/* Header with Navigation */}
       <header className="sticky top-0 z-50 border-b bg-white">
         <div className="container mx-auto px-6 py-4">

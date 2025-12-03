@@ -19,7 +19,7 @@ interface NavbarProps {
   propertySlug?: string
 }
 
-// Icon mapping for property nav items
+// Icon mapping for nav items
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Home,
   Bed,
@@ -34,12 +34,12 @@ export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const exploreNavItems = [
-    { href: "/explore", label: "Home" },
-    { href: "/explore/rooms", label: "Rooms" },
-    { href: "/explore/attractions", label: "Attractions" },
-    { href: "/explore/features", label: "Features" },
-    { href: "/explore/about", label: "About" },
-    { href: "/explore/contact", label: "Contact" },
+    { href: "/explore", label: "Home", icon: "Home" },
+    { href: "/explore/rooms", label: "Rooms", icon: "Bed" },
+    { href: "/explore/attractions", label: "Attractions", icon: "Mountain" },
+    { href: "/explore/features", label: "Features", icon: "Sparkles" },
+    { href: "/explore/about", label: "About", icon: "Info" },
+    { href: "/explore/contact", label: "Contact", icon: "Phone" },
   ]
 
   const propertyNavItems = propertySlug
@@ -187,20 +187,26 @@ export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
             <div className="flex items-center gap-4 md:gap-8">
               {/* Desktop Navigation */}
               <nav className="hidden md:flex items-center gap-6">
-                {navItems.map((item) => (
-                  <OptimizedLink
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "py-2 text-sm font-medium transition-colors",
-                      isActive(item.href)
-                        ? "border-b-2 border-primary text-primary"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {item.label}
-                  </OptimizedLink>
-                ))}
+                {navItems.map((item) => {
+                  const Icon = "icon" in item && typeof item.icon === "string"
+                    ? iconMap[item.icon as keyof typeof iconMap]
+                    : null
+                  return (
+                    <OptimizedLink
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-2 py-2 px-3 text-sm font-medium transition-colors",
+                        isActive(item.href)
+                          ? "border-b-2 border-primary text-primary"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {Icon && <Icon className="h-4 w-4" />}
+                      <span>{item.label}</span>
+                    </OptimizedLink>
+                  )
+                })}
               </nav>
 
               <span className="hidden md:block text-muted-foreground">|</span>
@@ -234,21 +240,27 @@ export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
                     <SheetTitle>Navigation</SheetTitle>
                   </SheetHeader>
                   <nav className="flex flex-col gap-4 mt-6">
-                    {navItems.map((item) => (
-                      <OptimizedLink
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "py-3 px-4 rounded-lg text-base font-medium transition-colors",
-                          isActive(item.href)
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        )}
-                      >
-                        {item.label}
-                      </OptimizedLink>
-                    ))}
+                    {navItems.map((item) => {
+                      const Icon = "icon" in item && typeof item.icon === "string"
+                        ? iconMap[item.icon as keyof typeof iconMap]
+                        : null
+                      return (
+                        <OptimizedLink
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={cn(
+                            "flex items-center gap-2 py-3 px-4 rounded-lg text-base font-medium transition-colors",
+                            isActive(item.href)
+                              ? "bg-primary text-primary-foreground"
+                              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                          )}
+                        >
+                          {Icon && <Icon className="h-4 w-4" />}
+                          <span>{item.label}</span>
+                        </OptimizedLink>
+                      )
+                    })}
                     <div className="pt-4 mt-4 border-t">
                       <OptimizedLink
                         href="/explore"

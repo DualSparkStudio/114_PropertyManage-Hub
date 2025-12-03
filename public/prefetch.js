@@ -16,10 +16,8 @@
     link.as = 'document';
     document.head.appendChild(link);
     
-    // Also try to fetch and cache in service worker
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      fetch(href, { method: 'HEAD' }).catch(() => {});
-    }
+    // DO NOT use service worker - it's disabled to prevent 404 errors
+    // Service worker was causing 404 errors by caching incorrect responses
   }
   
   // Prefetch links on mouseenter with delay

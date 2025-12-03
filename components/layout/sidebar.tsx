@@ -17,6 +17,12 @@ import {
   Globe,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 
 const menuItems = [
   {
@@ -71,11 +77,16 @@ const menuItems = [
   },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileMenuOpen: boolean
+  setMobileMenuOpen: (open: boolean) => void
+}
+
+const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-screen w-64 flex-col border-r border-border bg-white">
+    <>
       <div className="flex h-16 items-center border-b border-border px-6">
         <div className="flex items-center gap-2">
           <Home className="h-6 w-6 text-primary" />
@@ -88,13 +99,14 @@ export function Sidebar() {
         <Link
           href="/explore"
           target="_blank"
+          onClick={onLinkClick}
           className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors w-full"
         >
           <Globe className="h-4 w-4" />
           <span>View Website</span>
         </Link>
       </div>
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
@@ -102,6 +114,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onLinkClick}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors",
                 isActive
@@ -115,7 +128,30 @@ export function Sidebar() {
           )
         })}
       </nav>
-    </div>
+    </>
+  )
+}
+
+export function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarProps) {
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex h-screen w-64 flex-col border-r border-border bg-white">
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile Sidebar Sheet */}
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent side="left" className="w-64 p-0">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Navigation Menu</SheetTitle>
+          </SheetHeader>
+          <div className="flex h-full flex-col">
+            <SidebarContent onLinkClick={() => setMobileMenuOpen(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   )
 }
 

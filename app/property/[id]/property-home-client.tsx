@@ -61,12 +61,12 @@ export function PropertyHomeClient({ propertySlug }: PropertyHomeClientProps) {
     <div className="min-h-screen bg-[#f7f7f8]">
       {/* Header with Navigation */}
       <header className="sticky top-0 z-50 border-b bg-white">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/explore" className="text-2xl font-bold text-primary">
+            <Link href="/explore" className="text-xl md:text-2xl font-bold text-primary">
               PropertyManage
             </Link>
-            <nav className="flex items-center gap-6">
+            <nav className="hidden md:flex items-center gap-6">
               <Link href={`/property/${propertySlug}`} className="flex items-center gap-2 py-2 px-3 border-b-2 border-primary text-primary font-medium">
                 <Home className="h-4 w-4" />
                 <span className="hidden sm:inline">Home</span>
@@ -91,8 +91,8 @@ export function PropertyHomeClient({ propertySlug }: PropertyHomeClientProps) {
                 <Phone className="h-4 w-4" />
                 <span className="hidden sm:inline">Contact</span>
               </Link>
-              <span className="hidden md:block text-muted-foreground">|</span>
-              <div className="hidden md:flex items-center gap-6">
+              <span className="hidden lg:block text-muted-foreground">|</span>
+              <div className="hidden lg:flex items-center gap-6">
                 <Link href="/explore" className="text-sm font-medium hover:text-primary">
                   Explore
                 </Link>
@@ -105,14 +105,14 @@ export function PropertyHomeClient({ propertySlug }: PropertyHomeClientProps) {
         </div>
       </header>
 
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-4 md:px-6 py-6 md:py-8">
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Property Name & Rating */}
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between flex-col sm:flex-row gap-4">
               <div>
-                <h1 className="text-4xl font-bold mb-2">{property.name}</h1>
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2">{property.name}</h1>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1">
                     <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />

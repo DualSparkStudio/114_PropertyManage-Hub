@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { LoadingBar } from "@/components/loading-bar";
@@ -14,6 +14,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "PropertyManage Hub - Multi-Property Management System",
   description: "Modern property management system for hotels and resorts",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({

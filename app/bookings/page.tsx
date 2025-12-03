@@ -88,14 +88,14 @@ export default function BookingsPage() {
 
         {/* Filters */}
         <Card className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-4">
             <div className="flex-1 min-w-[200px]">
               <Input placeholder="Search bookings..." />
             </div>
-            <Input type="date" className="w-[180px]" placeholder="Check-in" />
-            <Input type="date" className="w-[180px]" placeholder="Check-out" />
+            <Input type="date" className="w-full sm:w-[180px]" placeholder="Check-in" />
+            <Input type="date" className="w-full sm:w-[180px]" placeholder="Check-out" />
             <Select>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -106,7 +106,7 @@ export default function BookingsPage() {
               </SelectContent>
             </Select>
             <Select>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Property" />
               </SelectTrigger>
               <SelectContent>
@@ -117,7 +117,7 @@ export default function BookingsPage() {
               </SelectContent>
             </Select>
             <Select>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Source" />
               </SelectTrigger>
               <SelectContent>

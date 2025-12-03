@@ -80,12 +80,12 @@ export default function RoomsPage() {
 
         {/* Filters */}
         <Card className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-4">
             <div className="flex-1 min-w-[200px]">
               <Input placeholder="Search rooms..." />
             </div>
             <Select>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Property" />
               </SelectTrigger>
               <SelectContent>
@@ -96,7 +96,7 @@ export default function RoomsPage() {
               </SelectContent>
             </Select>
             <Select>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -107,7 +107,7 @@ export default function RoomsPage() {
               </SelectContent>
             </Select>
             <Select>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Cleanliness" />
               </SelectTrigger>
               <SelectContent>

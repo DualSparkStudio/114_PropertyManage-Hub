@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Bell, ChevronDown } from "lucide-react"
+import { Search, Bell, ChevronDown, Menu } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -13,20 +13,33 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 
-export function Topbar() {
+interface TopbarProps {
+  onMenuClick: () => void
+}
+
+export function Topbar({ onMenuClick }: TopbarProps) {
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-white px-6">
-      <div className="flex flex-1 items-center gap-4">
+    <header className="sticky top-0 z-40 flex h-16 items-center gap-2 md:gap-4 border-b border-border bg-white px-4 md:px-6">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        onClick={onMenuClick}
+        aria-label="Open menu"
+      >
+        <Menu className="h-5 w-5" />
+      </Button>
+      <div className="flex flex-1 items-center gap-2 md:gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search properties, bookings, guests..."
-            className="pl-10"
+            placeholder="Search..."
+            className="pl-10 text-sm md:text-base"
           />
         </div>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive" />
@@ -41,7 +54,7 @@ export function Topbar() {
               <span className="hidden md:block text-sm font-medium">
                 Admin User
               </span>
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-4 w-4 hidden sm:block" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">

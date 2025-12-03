@@ -4,7 +4,8 @@ import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Mountain, MapPin } from "lucide-react"
-import { propertyData } from "@/app/property/[id]/property-data"
+import { propertyData } from "@/lib/data/property-data"
+import { Footer } from "@/components/layout/footer"
 
 export default function AttractionsPage() {
   // Aggregate all attractions from all properties
@@ -109,6 +110,8 @@ export default function AttractionsPage() {
           ))}
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }

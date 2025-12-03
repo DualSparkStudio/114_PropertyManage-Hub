@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Bed, Users, Wifi, Car, Star, Home, Mountain, Sparkles, Info, Phone, Share2 } from "lucide-react"
-import { propertyData } from "./property-data"
+import { propertyData } from "@/lib/data/property-data"
+import { Footer } from "@/components/layout/footer"
 
 interface PropertyHomeClientProps {
   propertySlug: string
@@ -272,6 +273,8 @@ export function PropertyHomeClient({ propertySlug }: PropertyHomeClientProps) {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }

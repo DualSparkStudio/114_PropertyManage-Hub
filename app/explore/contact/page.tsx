@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Phone, Mail, MapPin, Calendar } from "lucide-react"
+import { Footer } from "@/components/layout/footer"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -157,6 +158,8 @@ export default function ContactPage() {
           </Card>
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }

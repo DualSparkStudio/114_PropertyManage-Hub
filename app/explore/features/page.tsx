@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { propertyData } from "@/app/property/[id]/property-data"
+import { propertyData } from "@/lib/data/property-data"
+import { Footer } from "@/components/layout/footer"
 
 export default function FeaturesPage() {
   // Aggregate all features from all properties
@@ -98,6 +99,8 @@ export default function FeaturesPage() {
           })}
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }

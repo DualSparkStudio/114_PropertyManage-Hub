@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Phone, Mail, MapPin, Calendar, Home, Bed, Mountain, Sparkles, Info } from "lucide-react"
-import { propertyData } from "../property-data"
+import { propertyData } from "@/lib/data/property-data"
+import { Footer } from "@/components/layout/footer"
 
 interface PropertyContactClientProps {
   propertySlug: string
@@ -168,6 +169,8 @@ export function PropertyContactClient({ propertySlug }: PropertyContactClientPro
           </Card>
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }

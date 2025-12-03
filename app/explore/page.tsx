@@ -23,6 +23,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { MapPin, Bed, Star, Search, Menu } from "lucide-react"
+import { Footer } from "@/components/layout/footer"
 
 const properties = [
   {
@@ -329,6 +330,8 @@ export default function ExplorePage() {
           ))}
         </div>
       </section>
+
+      <Footer />
     </div>
   )
 }

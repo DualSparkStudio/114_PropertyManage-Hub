@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Sidebar } from "./sidebar"
 import { Topbar } from "./topbar"
+import { AdminFooter } from "./admin-footer"
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -15,6 +16,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 overflow-y-auto bg-[#f7f7f8] p-4 md:p-6">
           {children}
         </main>
+        <AdminFooter />
       </div>
     </div>
   )

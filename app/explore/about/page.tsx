@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Footer } from "@/components/layout/footer"
 
 export default function AboutPage() {
   return (
@@ -100,6 +101,8 @@ export default function AboutPage() {
           </Card>
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }

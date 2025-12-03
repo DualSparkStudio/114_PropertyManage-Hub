@@ -5,7 +5,8 @@ import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Bed, Users, Square, Home, Mountain, Sparkles, Info, Phone } from "lucide-react"
-import { propertyData } from "../property-data"
+import { propertyData } from "@/lib/data/property-data"
+import { Footer } from "@/components/layout/footer"
 
 interface PropertyRoomsClientProps {
   propertySlug: string
@@ -111,6 +112,8 @@ export function PropertyRoomsClient({ propertySlug }: PropertyRoomsClientProps) 
           ))}
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }

@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Bed, Users, Square, MapPin } from "lucide-react"
-import { propertyData } from "@/app/property/[id]/property-data"
+import { propertyData } from "@/lib/data/property-data"
+import { Footer } from "@/components/layout/footer"
 
 export default function RoomsPage() {
   // Aggregate all rooms from all properties
@@ -121,6 +122,8 @@ export default function RoomsPage() {
           ))}
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }

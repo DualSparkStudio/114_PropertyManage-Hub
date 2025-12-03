@@ -11,7 +11,7 @@ try {
 import { Button, ButtonProps } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-interface PremiumButtonProps extends ButtonProps {
+interface PremiumButtonProps extends Omit<ButtonProps, "variant"> {
   variant?: "default" | "ghost" | "glass" | "gradient" | "minimal"
   magnetic?: boolean
 }

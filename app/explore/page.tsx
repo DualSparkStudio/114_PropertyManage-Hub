@@ -15,15 +15,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import { MapPin, Bed, Star, Search, Menu } from "lucide-react"
+import { MapPin, Bed, Star, Search } from "lucide-react"
 import { Footer } from "@/components/layout/footer"
+import { Navbar } from "@/components/layout/navbar"
 
 const properties = [
   {
@@ -178,88 +172,7 @@ export default function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-white">
-        <div className="container mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="text-xl md:text-2xl font-bold text-primary">
-              PropertyManage
-            </Link>
-            <div className="flex items-center gap-4 md:gap-8">
-              <nav className="hidden md:flex items-center gap-6">
-                <OptimizedLink href="/explore" className="py-2 border-b-2 border-primary text-primary font-medium">
-                  Home
-                </OptimizedLink>
-                <OptimizedLink href="/explore/rooms" className="py-2 text-muted-foreground hover:text-foreground">
-                  Rooms
-                </OptimizedLink>
-                <OptimizedLink href="/explore/attractions" className="py-2 text-muted-foreground hover:text-foreground">
-                  Attractions
-                </OptimizedLink>
-                <OptimizedLink href="/explore/features" className="py-2 text-muted-foreground hover:text-foreground">
-                  Features
-                </OptimizedLink>
-                <OptimizedLink href="/explore/about" className="py-2 text-muted-foreground hover:text-foreground">
-                  About
-                </OptimizedLink>
-                <OptimizedLink href="/explore/contact" className="py-2 text-muted-foreground hover:text-foreground">
-                  Contact
-                </OptimizedLink>
-              </nav>
-              <span className="hidden md:block text-muted-foreground">|</span>
-              <nav className="hidden sm:flex items-center gap-4 md:gap-6">
-                <OptimizedLink href="/explore" className="text-sm font-medium hover:text-primary">
-                  Explore
-                </OptimizedLink>
-                <OptimizedLink href="/admin" className="text-sm font-medium hover:text-primary">
-                  Admin
-                </OptimizedLink>
-              </nav>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right">
-                  <SheetHeader>
-                    <SheetTitle>Navigation</SheetTitle>
-                  </SheetHeader>
-                  <nav className="flex flex-col gap-4 mt-6">
-                    <OptimizedLink href="/explore" className="py-2 border-b-2 border-primary text-primary font-medium">
-                      Home
-                    </OptimizedLink>
-                    <OptimizedLink href="/explore/rooms" className="py-2 text-muted-foreground hover:text-foreground">
-                      Rooms
-                    </OptimizedLink>
-                    <OptimizedLink href="/explore/attractions" className="py-2 text-muted-foreground hover:text-foreground">
-                      Attractions
-                    </OptimizedLink>
-                    <OptimizedLink href="/explore/features" className="py-2 text-muted-foreground hover:text-foreground">
-                      Features
-                    </OptimizedLink>
-                    <OptimizedLink href="/explore/about" className="py-2 text-muted-foreground hover:text-foreground">
-                      About
-                    </OptimizedLink>
-                    <OptimizedLink href="/explore/contact" className="py-2 text-muted-foreground hover:text-foreground">
-                      Contact
-                    </OptimizedLink>
-                    <div className="pt-4 border-t">
-                      <OptimizedLink href="/explore" className="block py-2 text-sm font-medium hover:text-primary">
-                        Explore
-                      </OptimizedLink>
-                      <OptimizedLink href="/admin" className="block py-2 text-sm font-medium hover:text-primary">
-                        Admin
-                      </OptimizedLink>
-                    </div>
-                  </nav>
-                </SheetContent>
-              </Sheet>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar variant="explore" />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-primary/10 to-primary/5 py-8 md:py-16">

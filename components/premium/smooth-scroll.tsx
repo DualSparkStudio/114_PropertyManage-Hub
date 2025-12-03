@@ -39,8 +39,8 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
         gestureOrientation: "vertical",
         smoothWheel: true,
         wheelMultiplier: 1,
-        smoothTouch: false, // Disable smooth touch on mobile to prevent conflicts
-        touchMultiplier: 2,
+        smoothTouch: true, // Enable smooth touch on mobile for better UX
+        touchMultiplier: 1.5, // Reduced for smoother mobile scrolling
         infinite: false,
       })
 

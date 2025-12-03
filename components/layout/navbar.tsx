@@ -84,7 +84,7 @@ export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
 
             <span className="hidden md:block text-muted-foreground">|</span>
 
-            {/* Quick Links */}
+            {/* Quick Links - Admin prominently on the right */}
             <nav className="hidden sm:flex items-center gap-4 md:gap-6">
               <OptimizedLink 
                 href="/explore" 
@@ -94,7 +94,7 @@ export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
               </OptimizedLink>
               <OptimizedLink 
                 href="/admin" 
-                className="text-sm font-medium hover:text-primary transition-colors"
+                className="text-sm font-semibold px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 Admin
               </OptimizedLink>
@@ -139,7 +139,7 @@ export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
                     <OptimizedLink
                       href="/admin"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block py-3 px-4 rounded-lg text-base font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                      className="block py-3 px-4 rounded-lg text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                     >
                       Admin
                     </OptimizedLink>

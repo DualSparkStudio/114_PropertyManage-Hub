@@ -34,13 +34,27 @@ export function StaticLink({
   // Get base path for GitHub Pages (works for both dev and production)
   const basePath = useMemo(() => {
     if (typeof window === "undefined") return ""
-    // Extract base path from current location (e.g., "/114_PropertyManage-Hub")
-    // Use the same logic as GitHubPagesScript
-    const basePath = window.location.pathname.split('/').slice(0, 2).join('/') || ''
-    // Only use base path if it's not empty and not just "/"
-    if (basePath && basePath !== '/') {
-      return basePath
+    
+    const pathname = window.location.pathname
+    const pathParts = pathname.split('/').filter(Boolean)
+    
+    // Known routes that indicate we're NOT on GitHub Pages
+    const knownRoutes = [
+      'explore', 'admin', 'property', 'bookings', 'calendar', 
+      'ota-sync', 'rooms', 'finance', 'staff', 'reports', 
+      'settings', 'properties', 'checkout', 'confirmation'
+    ]
+    
+    // If first path segment is a known route, we're in dev mode (no base path)
+    if (pathParts.length > 0 && knownRoutes.includes(pathParts[0])) {
+      return ""
     }
+    
+    // Otherwise, first segment is likely the base path (GitHub Pages)
+    if (pathParts.length > 0) {
+      return `/${pathParts[0]}`
+    }
+    
     return ""
   }, [])
 

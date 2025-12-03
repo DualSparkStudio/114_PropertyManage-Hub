@@ -18,6 +18,10 @@ const nextConfig = {
   swcMinify: true,
   // Optimize fonts
   optimizeFonts: true,
+  // Disable RSC prefetching for static export
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
 };
 
 export default nextConfig;

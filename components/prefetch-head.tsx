@@ -7,7 +7,7 @@ export function PrefetchHead() {
     // Get base path from current location (works for both dev and GitHub Pages)
     const basePath = window.location.pathname.split('/').slice(0, 2).join('/') || ''
     
-    // Add prefetch links
+    // Add prefetch links (only actual routes, not non-existent admin sub-routes)
     const prefetchUrls = [
       '/explore/',
       '/explore/rooms/',
@@ -16,6 +16,15 @@ export function PrefetchHead() {
       '/explore/about/',
       '/explore/contact/',
       '/admin/',
+      '/bookings/',
+      '/calendar/',
+      '/ota-sync/',
+      '/rooms/',
+      '/finance/',
+      '/staff/',
+      '/reports/',
+      '/settings/',
+      '/properties/',
     ]
     
     prefetchUrls.forEach(url => {
@@ -26,11 +35,16 @@ export function PrefetchHead() {
       document.head.appendChild(link)
     })
     
-    // Add prefetch script
-    const script = document.createElement('script')
-    script.src = `${basePath}/prefetch.js`
-    script.defer = true
-    document.head.appendChild(script)
+    // Add scripts
+    const suppressScript = document.createElement('script')
+    suppressScript.src = `${basePath}/suppress-rsc-errors.js`
+    suppressScript.defer = true
+    document.head.appendChild(suppressScript)
+    
+    const prefetchScript = document.createElement('script')
+    prefetchScript.src = `${basePath}/prefetch.js`
+    prefetchScript.defer = true
+    document.head.appendChild(prefetchScript)
     
     return () => {
       // Cleanup on unmount (though this component shouldn't unmount)
@@ -40,9 +54,13 @@ export function PrefetchHead() {
           existingLink.remove()
         }
       })
-      const existingScript = document.querySelector(`script[src="${basePath}/prefetch.js"]`)
-      if (existingScript) {
-        existingScript.remove()
+      const existingPrefetchScript = document.querySelector(`script[src="${basePath}/prefetch.js"]`)
+      if (existingPrefetchScript) {
+        existingPrefetchScript.remove()
+      }
+      const existingSuppressScript = document.querySelector(`script[src="${basePath}/suppress-rsc-errors.js"]`)
+      if (existingSuppressScript) {
+        existingSuppressScript.remove()
       }
     }
   }, [])

@@ -142,11 +142,11 @@ export function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarProps) {
 
       {/* Mobile Sidebar Sheet */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="w-64 p-0 sm:w-80">
           <SheetHeader className="sr-only">
             <SheetTitle>Navigation Menu</SheetTitle>
           </SheetHeader>
-          <div className="flex h-full flex-col">
+          <div className="flex h-full flex-col overflow-hidden">
             <SidebarContent onLinkClick={() => setMobileMenuOpen(false)} />
           </div>
         </SheetContent>

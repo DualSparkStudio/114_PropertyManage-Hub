@@ -26,31 +26,14 @@ export function OptimizedLink({
   const [isPending, startTransition] = useTransition()
 
   // Prefetch on hover with delay to avoid unnecessary requests
+  // Disabled for static export to prevent RSC data fetching errors
   useEffect(() => {
     const link = linkRef.current
     if (!link || target === "_blank") return
 
-    let timeoutId: NodeJS.Timeout
-
-    const handleMouseEnter = () => {
-      // Delay prefetch slightly to avoid prefetching on accidental hovers
-      timeoutId = setTimeout(() => {
-        router.prefetch(href)
-      }, 100)
-    }
-
-    const handleMouseLeave = () => {
-      clearTimeout(timeoutId)
-    }
-
-    link.addEventListener("mouseenter", handleMouseEnter)
-    link.addEventListener("mouseleave", handleMouseLeave)
-
-    return () => {
-      link.removeEventListener("mouseenter", handleMouseEnter)
-      link.removeEventListener("mouseleave", handleMouseLeave)
-      clearTimeout(timeoutId)
-    }
+    // Skip prefetching in static export mode (no RSC support)
+    // The prefetch.js script handles prefetching instead
+    return
   }, [href, router, target])
 
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
@@ -78,7 +61,7 @@ export function OptimizedLink({
       target={target}
       rel={rel}
       onClick={handleClick}
-      prefetch={true}
+      prefetch={false}
       style={{ opacity: isPending ? 0.7 : 1 }}
     >
       {children}

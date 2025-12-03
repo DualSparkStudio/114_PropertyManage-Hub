@@ -36,15 +36,23 @@
         return;
       }
       
-      // Normalize href with base path
-      const normalizedHref = basePath ? basePath + href : href;
+      // Skip prefetching for non-existent admin sub-routes
+      // Only prefetch actual routes (not /admin/bookings, /admin/calendar, etc.)
+      if (href.startsWith('/admin/') && href !== '/admin/') {
+        return;
+      }
+      
+      // Normalize href with base path and ensure trailing slash for static export
+      let normalizedHref = basePath ? basePath + href : href;
+      if (!normalizedHref.endsWith('/') && !normalizedHref.includes('#')) {
+        normalizedHref += '/';
+      }
       
       link.addEventListener('mouseenter', function() {
         const timeoutId = setTimeout(() => {
           prefetchPage(normalizedHref);
-          timeouts.delete(link);
+          timeouts.set(link, timeoutId);
         }, prefetchDelay);
-        timeouts.set(link, timeoutId);
       }, { passive: true });
       
       link.addEventListener('mouseleave', function() {
@@ -68,7 +76,14 @@
           if (entry.isIntersecting) {
             const href = entry.target.getAttribute('href');
             if (href && href.startsWith('/')) {
-              const normalizedHref = basePath ? basePath + href : href;
+              // Skip non-existent admin sub-routes
+              if (href.startsWith('/admin/') && href !== '/admin/') {
+                return;
+              }
+              let normalizedHref = basePath ? basePath + href : href;
+              if (!normalizedHref.endsWith('/') && !normalizedHref.includes('#')) {
+                normalizedHref += '/';
+              }
               setTimeout(() => prefetchPage(normalizedHref), 500);
             }
           }

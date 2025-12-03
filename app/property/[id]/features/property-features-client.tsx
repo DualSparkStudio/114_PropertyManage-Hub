@@ -79,6 +79,8 @@ export function PropertyFeaturesClient({ propertySlug }: PropertyFeaturesClientP
           ))}
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }

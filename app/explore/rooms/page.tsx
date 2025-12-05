@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,6 +8,7 @@ import { Bed, Users, Square, MapPin } from "lucide-react"
 import { propertyData } from "@/lib/data/property-data"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { OptimizedLink } from "@/components/optimized-link"
 
 export default function RoomsPage() {
   // Aggregate all rooms from all properties
@@ -76,7 +76,9 @@ export default function RoomsPage() {
                     <span className="text-sm text-muted-foreground">/night</span>
                   </div>
                   <Button asChild>
-                    <Link href={`/property/${room.propertySlug}`}>View Property</Link>
+                    <OptimizedLink href={`/property/${room.propertySlug}`} target="_blank" rel="noopener noreferrer">
+                      View Property
+                    </OptimizedLink>
                   </Button>
                 </div>
               </CardContent>

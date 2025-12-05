@@ -71,7 +71,7 @@ export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
             {/* First Row: PropertyManage, Explore, Admin */}
             <div className="flex items-center justify-between mb-3">
               <OptimizedLink 
-                href={`/property/${propertySlug}`}
+                href="/explore"
                 className="text-xl md:text-2xl font-bold text-primary hover:opacity-80 transition-opacity"
               >
                 PropertyManage

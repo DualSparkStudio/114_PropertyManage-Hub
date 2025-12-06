@@ -700,7 +700,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                     </div>
                     {galleryImages.length === 0 && (
                       <p className="text-center text-muted-foreground py-8">
-                        No images in gallery. Click "Add Image URL" to add images.
+                        No images in gallery. Click &quot;Add Image URL&quot; to add images.
                       </p>
                     )}
                   </div>

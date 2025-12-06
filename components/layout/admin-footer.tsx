@@ -8,9 +8,7 @@ import {
   Mail, 
   MapPin, 
   Facebook, 
-  Twitter, 
   Instagram, 
-  Linkedin,
   Globe
 } from "lucide-react"
 import { OptimizedLink } from "@/components/optimized-link"
@@ -35,42 +33,29 @@ export function AdminFooter() {
               Streamline your operations and enhance guest experiences.
             </p>
             <div className="flex items-center gap-4">
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
+              <span
+                className="text-muted-foreground hover:text-primary transition-colors cursor-default"
                 aria-label="Facebook"
               >
                 <Facebook className="h-5 w-5" />
-              </a>
+              </span>
               <a
-                href="https://twitter.com"
+                href="https://x.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
-                aria-label="Twitter"
+                aria-label="X (Twitter)"
               >
-                <Twitter className="h-5 w-5" />
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
               </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
+              <span
+                className="text-muted-foreground hover:text-primary transition-colors cursor-default"
                 aria-label="Instagram"
               >
                 <Instagram className="h-5 w-5" />
-              </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="h-5 w-5" />
-              </a>
+              </span>
             </div>
           </div>
 

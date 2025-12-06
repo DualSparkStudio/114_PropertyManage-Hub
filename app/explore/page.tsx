@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, memo } from "react"
+import { useState, useMemo, memo, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { OptimizedLink } from "@/components/optimized-link"
@@ -18,81 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Bed, Star, Search } from "lucide-react"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
-
-const properties = [
-  {
-    id: "1",
-    slug: "grand-hotel",
-    name: "Grand Hotel",
-    type: "Hotel",
-    location: "New York, USA",
-    price: 150,
-    rating: 4.8,
-    reviews: 324,
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
-    description: "Luxurious hotel in the heart of New York City",
-  },
-  {
-    id: "2",
-    slug: "beach-resort",
-    name: "Beach Resort",
-    type: "Resort",
-    location: "Miami, USA",
-    price: 180,
-    rating: 4.9,
-    reviews: 512,
-    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800",
-    description: "Stunning beachfront resort with ocean views",
-  },
-  {
-    id: "3",
-    slug: "mountain-villa",
-    name: "Mountain Villa",
-    type: "Villa",
-    location: "Aspen, USA",
-    price: 350,
-    rating: 4.7,
-    reviews: 89,
-    image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
-    description: "Private villa with mountain views",
-  },
-  {
-    id: "4",
-    slug: "city-hotel",
-    name: "City Hotel",
-    type: "Hotel",
-    location: "San Francisco, USA",
-    price: 200,
-    rating: 4.6,
-    reviews: 267,
-    image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800",
-    description: "Modern hotel in downtown San Francisco",
-  },
-  {
-    id: "5",
-    slug: "lakeside-resort",
-    name: "Lakeside Resort",
-    type: "Resort",
-    location: "Lake Tahoe, USA",
-    price: 220,
-    rating: 4.9,
-    reviews: 445,
-    image: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800",
-    description: "Peaceful resort by the lake",
-  },
-  {
-    id: "6",
-    slug: "desert-oasis",
-    name: "Desert Oasis",
-    type: "Resort",
-    location: "Phoenix, USA",
-    price: 190,
-    rating: 4.5,
-    reviews: 198,
-    image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800",
-    description: "Luxury desert resort with spa facilities",
-  },
-]
+import { getAllProperties, getPropertyImages } from "@/lib/supabase/properties"
 
 // Memoized property card component
 const PropertyCard = memo(function PropertyCard({ property }: { property: any }) {
@@ -157,6 +83,40 @@ const PropertyCard = memo(function PropertyCard({ property }: { property: any })
 
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const [properties, setProperties] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  
+  useEffect(() => {
+    async function fetchProperties() {
+      try {
+        const data = await getAllProperties()
+        // Fetch images for each property
+        const propertiesWithImages = await Promise.all(
+          data.map(async (property) => {
+            const images = await getPropertyImages(property.id)
+            return {
+              id: property.id,
+              slug: property.slug,
+              name: property.name,
+              type: property.type,
+              location: property.location,
+              price: property.price,
+              rating: property.rating,
+              reviews: property.reviews,
+              image: images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
+              description: property.description || "",
+            }
+          })
+        )
+        setProperties(propertiesWithImages)
+      } catch (error) {
+        console.error("Error fetching properties:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProperties()
+  }, [])
   
   // Memoize filtered properties
   const filteredProperties = useMemo(() => {
@@ -166,9 +126,9 @@ export default function ExplorePage() {
       (p) =>
         p.name.toLowerCase().includes(query) ||
         p.location.toLowerCase().includes(query) ||
-        p.description.toLowerCase().includes(query)
+        (p.description && p.description.toLowerCase().includes(query))
     )
-  }, [searchQuery])
+  }, [searchQuery, properties])
 
   return (
     <div className="min-h-screen bg-background">
@@ -233,15 +193,27 @@ export default function ExplorePage() {
         <div className="mb-6 md:mb-8">
           <h2 className="text-2xl md:text-3xl font-bold mb-2">Available Properties</h2>
           <p className="text-muted-foreground">
-            {properties.length} properties available
+            {loading ? "Loading..." : `${properties.length} properties available`}
           </p>
         </div>
 
-        <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProperties.map((property) => (
-            <PropertyCard key={property.id} property={property} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading properties...</p>
+          </div>
+        ) : filteredProperties.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">
+              {searchQuery ? "No properties found matching your search." : "No properties available yet."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredProperties.map((property) => (
+              <PropertyCard key={property.id} property={property} />
+            ))}
+          </div>
+        )}
       </section>
 
       <Footer />

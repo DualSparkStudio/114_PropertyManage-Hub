@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
 import { PageHeader } from "@/components/reusable/page-header"
 import { PropertyCard } from "@/components/reusable/property-card"
@@ -13,65 +14,44 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Plus } from "lucide-react"
-
-const properties = [
-  {
-    id: "1",
-    name: "Grand Hotel",
-    type: "Hotel",
-    location: "New York, USA",
-    rooms: 120,
-    occupancy: 92,
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
-  },
-  {
-    id: "2",
-    name: "Beach Resort",
-    type: "Resort",
-    location: "Miami, USA",
-    rooms: 85,
-    occupancy: 78,
-    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800",
-  },
-  {
-    id: "3",
-    name: "Mountain Villa",
-    type: "Villa",
-    location: "Aspen, USA",
-    rooms: 12,
-    occupancy: 65,
-    image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
-  },
-  {
-    id: "4",
-    name: "City Hotel",
-    type: "Hotel",
-    location: "San Francisco, USA",
-    rooms: 200,
-    occupancy: 88,
-    image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800",
-  },
-  {
-    id: "5",
-    name: "Lakeside Resort",
-    type: "Resort",
-    location: "Lake Tahoe, USA",
-    rooms: 95,
-    occupancy: 72,
-    image: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800",
-  },
-  {
-    id: "6",
-    name: "Desert Oasis",
-    type: "Resort",
-    location: "Phoenix, USA",
-    rooms: 150,
-    occupancy: 81,
-    image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800",
-  },
-]
+import { useRouter } from "next/navigation"
+import { OptimizedLink } from "@/components/optimized-link"
+import { getAllProperties, getPropertyImages } from "@/lib/supabase/properties"
 
 export default function PropertiesPage() {
+  const router = useRouter()
+  const [properties, setProperties] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchProperties() {
+      try {
+        const data = await getAllProperties()
+        // Fetch images for each property
+        const propertiesWithImages = await Promise.all(
+          data.map(async (property) => {
+            const images = await getPropertyImages(property.id)
+            return {
+              id: property.id,
+              name: property.name,
+              type: property.type,
+              location: property.location,
+              rooms: property.total_rooms,
+              occupancy: 0, // Calculate from bookings if needed
+              image: images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
+            }
+          })
+        )
+        setProperties(propertiesWithImages)
+      } catch (error) {
+        console.error("Error fetching properties:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProperties()
+  }, [])
+  
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -80,7 +60,7 @@ export default function PropertiesPage() {
           description="Manage all your properties from one place"
           action={{
             label: "Add New Property",
-            onClick: () => {},
+            onClick: () => router.push("/properties/add"),
             icon: Plus,
           }}
         />
@@ -127,11 +107,21 @@ export default function PropertiesPage() {
         </Card>
 
         {/* Properties Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {properties.map((property) => (
-            <PropertyCard key={property.id} {...property} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading properties...</p>
+          </div>
+        ) : properties.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No properties found. Add your first property to get started!</p>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {properties.map((property) => (
+              <PropertyCard key={property.id} {...property} />
+            ))}
+          </div>
+        )}
       </div>
     </MainLayout>
   )

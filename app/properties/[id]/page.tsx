@@ -1,15 +1,9 @@
 import { PropertyDetailsClient } from "./property-details-client"
 
-// Generate static params for static export
+// Generate static params for static export (will be empty, pages load dynamically)
 export async function generateStaticParams() {
-  return [
-    { id: '1' },
-    { id: '2' },
-    { id: '3' },
-    { id: '4' },
-    { id: '5' },
-    { id: '6' },
-  ]
+  // Return empty array - pages will be generated on-demand
+  return []
 }
 
 export default function PropertyDetailsPage({

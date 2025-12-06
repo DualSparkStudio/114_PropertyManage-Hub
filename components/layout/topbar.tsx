@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { DbConnectionChecker } from "@/components/admin/db-connection-checker"
 
 interface TopbarProps {
   onMenuClick: () => void
@@ -40,6 +41,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         </div>
       </div>
       <div className="flex items-center gap-2 md:gap-4">
+        <DbConnectionChecker />
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive" />

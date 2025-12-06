@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { getSupabaseClient } from "@/lib/supabase/client"
 import { Badge } from "@/components/ui/badge"
-import { Database, DatabaseCheck, DatabaseX } from "lucide-react"
+import { Database, CheckCircle2, XCircle } from "lucide-react"
 
 export function DbConnectionChecker() {
   const [connectionStatus, setConnectionStatus] = useState<"checking" | "connected" | "disconnected">("checking")
@@ -69,7 +69,7 @@ export function DbConnectionChecker() {
   if (connectionStatus === "connected") {
     return (
       <Badge variant="success" className="gap-2">
-        <DatabaseCheck className="h-3 w-3" />
+        <CheckCircle2 className="h-3 w-3" />
         DB Connected
       </Badge>
     )
@@ -77,7 +77,7 @@ export function DbConnectionChecker() {
 
   return (
     <Badge variant="destructive" className="gap-2">
-      <DatabaseX className="h-3 w-3" />
+      <XCircle className="h-3 w-3" />
       DB Disconnected
     </Badge>
   )

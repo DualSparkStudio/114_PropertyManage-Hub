@@ -211,7 +211,7 @@ export async function updateProperty(id: string, updates: Partial<Property>): Pr
     .eq('id', id)
     .select()
 
-  // If not found by ID, try by slug
+  // If not found by ID or error, try by slug
   if (error || !data || data.length === 0) {
     const { data: slugData, error: slugError } = await supabase
       .from('properties')
@@ -225,15 +225,11 @@ export async function updateProperty(id: string, updates: Partial<Property>): Pr
     }
 
     if (!slugData || slugData.length === 0) {
+      // Property doesn't exist - this might be okay if we're creating
       throw new Error(`Property with id/slug "${id}" not found`)
     }
 
     return slugData[0]
-  }
-
-  if (error) {
-    console.error('Error updating property:', error)
-    throw error
   }
 
   return data[0]
@@ -250,6 +246,61 @@ export async function deleteProperty(id: string): Promise<void> {
 
   if (error) {
     console.error('Error deleting property:', error)
+    throw error
+  }
+}
+
+/**
+ * Create or update a room type
+ */
+export async function upsertRoomType(roomType: Partial<RoomType> & { property_id: string }): Promise<RoomType> {
+  const isNew = !roomType.id || roomType.id.startsWith('new-')
+  
+  if (isNew) {
+    // Create new room type
+    const { id, ...insertData } = roomType
+    const { data, error } = await supabase
+      .from('room_types')
+      .insert(insertData)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating room type:', error)
+      throw error
+    }
+
+    return data
+  } else {
+    // Update existing room type
+    const { id, ...updateData } = roomType
+    const { data, error } = await supabase
+      .from('room_types')
+      .update(updateData)
+      .eq('id', id!)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating room type:', error)
+      throw error
+    }
+
+    return data
+  }
+}
+
+/**
+ * Delete a room type
+ */
+export async function deleteRoomType(roomTypeId: string): Promise<void> {
+  const { error } = await supabase
+    .from('room_types')
+    .delete()
+    .eq('id', roomTypeId)
+
+  if (error) {
+    console.error('Error deleting room type:', error)
     throw error
   }
 }

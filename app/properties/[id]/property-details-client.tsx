@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { StatsCard } from "@/components/reusable/stats-card"
 import { Bed, DollarSign, TrendingUp, Image as ImageIcon, Edit, Save, X } from "lucide-react"
 import Image from "next/image"
-import { updateProperty, getPropertyBySlug, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures } from "@/lib/supabase/properties"
+import { updateProperty, getPropertyBySlug, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType } from "@/lib/supabase/properties"
 import { supabase } from "@/lib/supabase/client"
 import type { RoomType, Feature } from "@/lib/types/database"
 import {
@@ -138,11 +138,21 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         amenities: amenities,
       })
       
-      // TODO: Update room types, features, and gallery images
-      // For now, just save the main property data
+      // Update room types
+      for (const roomType of roomTypes) {
+        await upsertRoomType({
+          ...roomType,
+          property_id: propertyData.id,
+        })
+      }
+      
+      // TODO: Update gallery images and features
       
       alert("Property updated successfully!")
       setIsEditing(false)
+      
+      // Reload property data to get updated room types with new IDs
+      window.location.reload()
     } catch (error: any) {
       console.error("Error updating property:", error)
       alert(error.message || "Failed to update property. Please check the console for details.")
@@ -382,6 +392,80 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                   <div className="space-y-4">
                     {roomTypes.map((roomType, idx) => (
                       <div key={roomType.id} className="p-4 border rounded-lg space-y-3">
+                        <div className="flex items-start justify-between">
+                          <h4 className="font-semibold">Room Type {idx + 1}</h4>
+                          {isEditing && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={async () => {
+                                if (!roomType.id.startsWith('new-')) {
+                                  try {
+                                    await deleteRoomType(roomType.id)
+                                  } catch (error) {
+                                    console.error('Error deleting room type:', error)
+                                  }
+                                }
+                                setRoomTypes(roomTypes.filter((_, i) => i !== idx))
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {/* Room Image */}
+                        <div>
+                          <Label>Room Image</Label>
+                          <div className="mt-2 space-y-2">
+                            {roomType.image_url ? (
+                              <div className="relative h-32 w-full rounded-lg overflow-hidden group">
+                                <Image
+                                  src={roomType.image_url}
+                                  alt={roomType.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                                {isEditing && (
+                                  <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => {
+                                      const updated = [...roomTypes]
+                                      updated[idx].image_url = null
+                                      setRoomTypes(updated)
+                                    }}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="h-32 w-full border-2 border-dashed rounded-lg flex items-center justify-center">
+                                <p className="text-sm text-muted-foreground">No image</p>
+                              </div>
+                            )}
+                            {isEditing && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const url = prompt("Enter room image URL:", roomType.image_url || "")
+                                  if (url) {
+                                    const updated = [...roomTypes]
+                                    updated[idx].image_url = url
+                                    setRoomTypes(updated)
+                                  }
+                                }}
+                              >
+                                <ImageIcon className="mr-2 h-4 w-4" />
+                                {roomType.image_url ? "Change Image" : "Add Image"}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <Label>Room Type Name</Label>
@@ -466,32 +550,48 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                     </Button>
                   </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Beds</TableHead>
-                        <TableHead>Size</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {roomTypes.length > 0 ? roomTypes.map((roomType) => (
-                        <TableRow key={roomType.id}>
-                          <TableCell className="font-medium">{roomType.name}</TableCell>
-                          <TableCell>${roomType.price}</TableCell>
-                          <TableCell>{roomType.beds}</TableCell>
-                          <TableCell>{roomType.size}</TableCell>
-                        </TableRow>
-                      )) : (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center text-muted-foreground">
-                            No room types found
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                  <div className="space-y-4">
+                    {roomTypes.length > 0 ? roomTypes.map((roomType) => (
+                      <div key={roomType.id} className="p-4 border rounded-lg">
+                        <div className="flex gap-4">
+                          {roomType.image_url && (
+                            <div className="relative h-24 w-24 rounded-lg overflow-hidden flex-shrink-0">
+                              <Image
+                                src={roomType.image_url}
+                                alt={roomType.name}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{roomType.name}</h4>
+                            <div className="grid grid-cols-3 gap-4 mt-2 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Price: </span>
+                                <span className="font-medium">${roomType.price}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Beds: </span>
+                                <span className="font-medium">{roomType.beds}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Size: </span>
+                                <span className="font-medium">{roomType.size}</span>
+                              </div>
+                            </div>
+                            {roomType.description && (
+                              <p className="text-sm text-muted-foreground mt-2">{roomType.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )) : (
+                      <p className="text-center text-muted-foreground py-8">
+                        No room types found
+                      </p>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>

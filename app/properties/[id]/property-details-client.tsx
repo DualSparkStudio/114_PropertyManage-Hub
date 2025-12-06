@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { StatsCard } from "@/components/reusable/stats-card"
 import { Bed, DollarSign, TrendingUp, Image as ImageIcon, Edit, Save, X } from "lucide-react"
 import Image from "next/image"
-import { updateProperty, getPropertyBySlug, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType } from "@/lib/supabase/properties"
+import { updateProperty, getPropertyBySlug, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType, getRoomTypeImages, upsertRoomTypeImages } from "@/lib/supabase/properties"
 import { supabase } from "@/lib/supabase/client"
 import type { RoomType, Feature } from "@/lib/types/database"
 import {
@@ -50,7 +50,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
   })
   const [heroImage, setHeroImage] = useState("https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
   const [galleryImages, setGalleryImages] = useState<string[]>([])
-  const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
+  const [roomTypes, setRoomTypes] = useState<(RoomType & { image_urls?: string[] })[]>([])
   const [amenities, setAmenities] = useState<string[]>([])
   const [features, setFeatures] = useState<Feature[]>([])
 
@@ -66,13 +66,34 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
 
         if (error || !data) {
           // If not found by ID, try to get by slug
+          console.log(`Property not found by ID "${propertyId}", trying slug...`)
           const property = await getPropertyBySlug(propertyId)
           if (property) {
+            console.log(`Property found by slug:`, property.id)
             const [images, roomTypesData, featuresData] = await Promise.all([
               getPropertyImages(property.id),
               getPropertyRoomTypes(property.id),
               getPropertyFeatures(property.id),
             ])
+            
+            // Fetch images for each room type
+            const roomTypesWithImages = await Promise.all(
+              roomTypesData.map(async (rt) => {
+                try {
+                  const roomImages = await getRoomTypeImages(rt.id)
+                  return {
+                    ...rt,
+                    image_urls: roomImages.map(img => img.url),
+                  }
+                } catch (error) {
+                  // Fallback to single image_url if room_type_images table doesn't exist yet
+                  return {
+                    ...rt,
+                    image_urls: rt.image_url ? [rt.image_url] : [],
+                  }
+                }
+              })
+            )
             
             setPropertyData({
               id: property.id,
@@ -86,16 +107,40 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
             })
             setHeroImage(images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
             setGalleryImages(images.map(img => img.url))
-            setRoomTypes(roomTypesData)
+            setRoomTypes(roomTypesWithImages)
             setAmenities(property.amenities || [])
             setFeatures(featuresData)
+          } else {
+            console.error(`Property with id/slug "${propertyId}" not found in database. Please ensure the seed data has been run.`)
+            setLoading(false)
+            return
           }
         } else {
+          console.log(`Property found by ID:`, data.id)
           const [images, roomTypesData, featuresData] = await Promise.all([
             getPropertyImages(data.id),
             getPropertyRoomTypes(data.id),
             getPropertyFeatures(data.id),
           ])
+          
+          // Fetch images for each room type
+          const roomTypesWithImages = await Promise.all(
+            roomTypesData.map(async (rt) => {
+              try {
+                const roomImages = await getRoomTypeImages(rt.id)
+                return {
+                  ...rt,
+                  image_urls: roomImages.map(img => img.url),
+                }
+              } catch (error) {
+                // Fallback to single image_url if room_type_images table doesn't exist yet
+                return {
+                  ...rt,
+                  image_urls: rt.image_url ? [rt.image_url] : [],
+                }
+              }
+            })
+          )
           
           setPropertyData({
             id: data.id,
@@ -109,7 +154,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           })
           setHeroImage(images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
           setGalleryImages(images.map(img => img.url))
-          setRoomTypes(roomTypesData)
+          setRoomTypes(roomTypesWithImages)
           setAmenities(data.amenities || [])
           setFeatures(featuresData)
         }
@@ -140,10 +185,28 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
       
       // Update room types
       for (const roomType of roomTypes) {
-        await upsertRoomType({
-          ...roomType,
+        // Save room type (without image_urls, that's handled separately)
+        const { image_urls, ...roomTypeData } = roomType
+        const savedRoomType = await upsertRoomType({
+          ...roomTypeData,
           property_id: propertyData.id,
         })
+        
+        // Save room type images
+        if (image_urls && image_urls.length > 0) {
+          try {
+            await upsertRoomTypeImages(savedRoomType.id, image_urls)
+          } catch (error) {
+            console.warn('Could not save room type images (table might not exist yet):', error)
+            // Fallback: save first image in image_url field
+            if (image_urls[0]) {
+              await upsertRoomType({
+                ...savedRoomType,
+                image_url: image_urls[0],
+              })
+            }
+          }
+        }
       }
       
       // TODO: Update gallery images and features
@@ -414,36 +477,40 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                           )}
                         </div>
                         
-                        {/* Room Image */}
+                        {/* Room Images - Multiple */}
                         <div>
-                          <Label>Room Image</Label>
+                          <Label>Room Images</Label>
                           <div className="mt-2 space-y-2">
-                            {roomType.image_url ? (
-                              <div className="relative h-32 w-full rounded-lg overflow-hidden group">
-                                <Image
-                                  src={roomType.image_url}
-                                  alt={roomType.name}
-                                  fill
-                                  className="object-cover"
-                                />
-                                {isEditing && (
-                                  <Button
-                                    variant="destructive"
-                                    size="icon"
-                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={() => {
-                                      const updated = [...roomTypes]
-                                      updated[idx].image_url = null
-                                      setRoomTypes(updated)
-                                    }}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                )}
+                            {roomType.image_urls && roomType.image_urls.length > 0 ? (
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                {roomType.image_urls.map((imageUrl, imgIdx) => (
+                                  <div key={imgIdx} className="relative h-32 w-full rounded-lg overflow-hidden group">
+                                    <Image
+                                      src={imageUrl}
+                                      alt={`${roomType.name} ${imgIdx + 1}`}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                    {isEditing && (
+                                      <Button
+                                        variant="destructive"
+                                        size="icon"
+                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
+                                        onClick={() => {
+                                          const updated = [...roomTypes]
+                                          updated[idx].image_urls = updated[idx].image_urls?.filter((_, i) => i !== imgIdx) || []
+                                          setRoomTypes(updated)
+                                        }}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                ))}
                               </div>
                             ) : (
                               <div className="h-32 w-full border-2 border-dashed rounded-lg flex items-center justify-center">
-                                <p className="text-sm text-muted-foreground">No image</p>
+                                <p className="text-sm text-muted-foreground">No images</p>
                               </div>
                             )}
                             {isEditing && (
@@ -451,16 +518,19 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  const url = prompt("Enter room image URL:", roomType.image_url || "")
+                                  const url = prompt("Enter room image URL:")
                                   if (url) {
                                     const updated = [...roomTypes]
-                                    updated[idx].image_url = url
+                                    if (!updated[idx].image_urls) {
+                                      updated[idx].image_urls = []
+                                    }
+                                    updated[idx].image_urls = [...(updated[idx].image_urls || []), url]
                                     setRoomTypes(updated)
                                   }
                                 }}
                               >
                                 <ImageIcon className="mr-2 h-4 w-4" />
-                                {roomType.image_url ? "Change Image" : "Add Image"}
+                                Add Image
                               </Button>
                             )}
                           </div>
@@ -538,6 +608,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                           beds: "",
                           size: "",
                           image_url: null,
+                          image_urls: [],
                           max_guests: 2,
                           description: null,
                           amenities: null,
@@ -554,7 +625,20 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                     {roomTypes.length > 0 ? roomTypes.map((roomType) => (
                       <div key={roomType.id} className="p-4 border rounded-lg">
                         <div className="flex gap-4">
-                          {roomType.image_url && (
+                          {roomType.image_urls && roomType.image_urls.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-2 flex-shrink-0">
+                              {roomType.image_urls.slice(0, 4).map((imgUrl, imgIdx) => (
+                                <div key={imgIdx} className="relative h-24 w-24 rounded-lg overflow-hidden">
+                                  <Image
+                                    src={imgUrl}
+                                    alt={`${roomType.name} ${imgIdx + 1}`}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          ) : roomType.image_url ? (
                             <div className="relative h-24 w-24 rounded-lg overflow-hidden flex-shrink-0">
                               <Image
                                 src={roomType.image_url}
@@ -563,7 +647,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                                 className="object-cover"
                               />
                             </div>
-                          )}
+                          ) : null}
                           <div className="flex-1">
                             <h4 className="font-semibold">{roomType.name}</h4>
                             <div className="grid grid-cols-3 gap-4 mt-2 text-sm">
@@ -582,6 +666,11 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                             </div>
                             {roomType.description && (
                               <p className="text-sm text-muted-foreground mt-2">{roomType.description}</p>
+                            )}
+                            {roomType.image_urls && roomType.image_urls.length > 4 && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                +{roomType.image_urls.length - 4} more images
+                              </p>
                             )}
                           </div>
                         </div>
@@ -892,4 +981,5 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
     </MainLayout>
   )
 }
+
 

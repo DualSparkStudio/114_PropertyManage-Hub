@@ -204,35 +204,68 @@ export async function createProperty(property: Partial<Property>): Promise<Prope
  * Update a property (admin only)
  */
 export async function updateProperty(id: string, updates: Partial<Property>): Promise<Property> {
-  // Try to update by ID first
-  let { data, error } = await supabase
-    .from('properties')
-    .update(updates)
-    .eq('id', id)
-    .select()
-
-  // If not found by ID or error, try by slug
-  if (error || !data || data.length === 0) {
-    const { data: slugData, error: slugError } = await supabase
+  // First, verify the property exists and get its actual ID
+  let actualId = id
+  
+  // Check if it's a valid UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  const isUUID = uuidRegex.test(id)
+  
+  if (isUUID) {
+    // Try to find by ID
+    const { data: checkData } = await supabase
       .from('properties')
-      .update(updates)
+      .select('id')
+      .eq('id', id)
+      .maybeSingle()
+    
+    if (!checkData) {
+      // Not found by ID, try by slug
+      const { data: slugCheck } = await supabase
+        .from('properties')
+        .select('id')
+        .eq('slug', id)
+        .maybeSingle()
+      
+      if (!slugCheck) {
+        throw new Error(`Property with id/slug "${id}" not found`)
+      }
+      
+      actualId = slugCheck.id
+    }
+  } else {
+    // Not a UUID, try by slug
+    const { data: slugCheck } = await supabase
+      .from('properties')
+      .select('id')
       .eq('slug', id)
-      .select()
-
-    if (slugError) {
-      console.error('Error updating property:', slugError)
-      throw slugError
+      .maybeSingle()
+    
+    if (!slugCheck) {
+      throw new Error(`Property with slug "${id}" not found`)
     }
-
-    if (!slugData || slugData.length === 0) {
-      // Property doesn't exist - this might be okay if we're creating
-      throw new Error(`Property with id/slug "${id}" not found`)
-    }
-
-    return slugData[0]
+    
+    actualId = slugCheck.id
   }
 
-  return data[0]
+  // Now update with the correct ID
+  const { data, error } = await supabase
+    .from('properties')
+    .update(updates)
+    .eq('id', actualId)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error updating property:', error)
+    throw error
+  }
+
+  if (!data) {
+    throw new Error(`Property with id "${actualId}" not found`)
+  }
+
+  return data
 }
 
 /**
@@ -302,6 +335,54 @@ export async function deleteRoomType(roomTypeId: string): Promise<void> {
   if (error) {
     console.error('Error deleting room type:', error)
     throw error
+  }
+}
+
+/**
+ * Get images for a room type
+ */
+export async function getRoomTypeImages(roomTypeId: string): Promise<Array<{ id: string; url: string; alt_text: string | null; order_index: number }>> {
+  const { data, error } = await supabase
+    .from('room_type_images')
+    .select('id, url, alt_text, order_index')
+    .eq('room_type_id', roomTypeId)
+    .order('order_index', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching room type images:', error)
+    throw error
+  }
+
+  return data || []
+}
+
+/**
+ * Upsert room type images (replace all images for a room type)
+ */
+export async function upsertRoomTypeImages(roomTypeId: string, imageUrls: string[]): Promise<void> {
+  // Delete existing images
+  await supabase
+    .from('room_type_images')
+    .delete()
+    .eq('room_type_id', roomTypeId)
+
+  // Insert new images
+  if (imageUrls.length > 0) {
+    const images = imageUrls.map((url, index) => ({
+      room_type_id: roomTypeId,
+      url,
+      alt_text: null,
+      order_index: index,
+    }))
+
+    const { error } = await supabase
+      .from('room_type_images')
+      .insert(images)
+
+    if (error) {
+      console.error('Error inserting room type images:', error)
+      throw error
+    }
   }
 }
 

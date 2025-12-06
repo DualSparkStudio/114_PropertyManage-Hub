@@ -21,7 +21,9 @@ export function DbConnectionChecker() {
         const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
         if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
-          console.log('🔵 [DB Status] Database connection check skipped - environment variables not configured')
+          const message = '🔵 [DB Status] Database connection check skipped - environment variables not configured'
+          console.log(message)
+          console.warn(message) // Also use warn so it's more visible
           setConnectionStatus("disconnected")
           return
         }
@@ -41,14 +43,20 @@ export function DbConnectionChecker() {
         }
 
         // Connection successful
-        console.log('✅ [DB Status] Database connected successfully')
+        const successMessage = '✅ [DB Status] Database connected successfully'
+        console.log(successMessage)
+        console.info(successMessage) // Also use info so it's more visible
         setConnectionStatus("connected")
       } catch (error: any) {
         // Check if it's the missing env vars error
         if (error.message?.includes('Missing Supabase environment variables')) {
-          console.log('🔵 [DB Status] Database connection check skipped - environment variables not configured')
+          const message = '🔵 [DB Status] Database connection check skipped - environment variables not configured'
+          console.log(message)
+          console.warn(message) // Also use warn so it's more visible
         } else {
-          console.error('❌ [DB Status] Database connection error:', error.message)
+          const errorMessage = `❌ [DB Status] Database connection error: ${error.message}`
+          console.error(errorMessage)
+          console.warn(errorMessage) // Also use warn so it's more visible
         }
         setConnectionStatus("disconnected")
       }

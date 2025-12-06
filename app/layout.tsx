@@ -33,6 +33,9 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "PropertyManage Hub - Multi-Property Management System",
   description: "Modern property management system for hotels and resorts",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export const viewport: Viewport = {

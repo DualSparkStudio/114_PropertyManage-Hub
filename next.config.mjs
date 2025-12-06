@@ -12,7 +12,8 @@ const nextConfig = {
   trailingSlash: true,
   // Performance optimizations
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    // Don't remove console in production - we need it for DB status logs
+    removeConsole: false,
   },
   // Optimize bundle
   swcMinify: true,

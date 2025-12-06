@@ -204,19 +204,39 @@ export async function createProperty(property: Partial<Property>): Promise<Prope
  * Update a property (admin only)
  */
 export async function updateProperty(id: string, updates: Partial<Property>): Promise<Property> {
-  const { data, error } = await supabase
+  // Try to update by ID first
+  let { data, error } = await supabase
     .from('properties')
     .update(updates)
     .eq('id', id)
     .select()
-    .single()
+
+  // If not found by ID, try by slug
+  if (error || !data || data.length === 0) {
+    const { data: slugData, error: slugError } = await supabase
+      .from('properties')
+      .update(updates)
+      .eq('slug', id)
+      .select()
+
+    if (slugError) {
+      console.error('Error updating property:', slugError)
+      throw slugError
+    }
+
+    if (!slugData || slugData.length === 0) {
+      throw new Error(`Property with id/slug "${id}" not found`)
+    }
+
+    return slugData[0]
+  }
 
   if (error) {
     console.error('Error updating property:', error)
     throw error
   }
 
-  return data
+  return data[0]
 }
 
 /**

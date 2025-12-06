@@ -12,8 +12,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { StatsCard } from "@/components/reusable/stats-card"
 import { Bed, DollarSign, TrendingUp, Image as ImageIcon, Edit, Save, X } from "lucide-react"
 import Image from "next/image"
-import { updateProperty, getPropertyBySlug, getPropertyImages } from "@/lib/supabase/properties"
+import { updateProperty, getPropertyBySlug, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures } from "@/lib/supabase/properties"
 import { supabase } from "@/lib/supabase/client"
+import type { RoomType, Feature } from "@/lib/types/database"
 import {
   Table,
   TableBody,
@@ -48,6 +49,10 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
     status: "Active",
   })
   const [heroImage, setHeroImage] = useState("https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
+  const [galleryImages, setGalleryImages] = useState<string[]>([])
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
+  const [amenities, setAmenities] = useState<string[]>([])
+  const [features, setFeatures] = useState<Feature[]>([])
 
   useEffect(() => {
     async function fetchProperty() {
@@ -63,7 +68,12 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           // If not found by ID, try to get by slug
           const property = await getPropertyBySlug(propertyId)
           if (property) {
-            const images = await getPropertyImages(property.id)
+            const [images, roomTypesData, featuresData] = await Promise.all([
+              getPropertyImages(property.id),
+              getPropertyRoomTypes(property.id),
+              getPropertyFeatures(property.id),
+            ])
+            
             setPropertyData({
               id: property.id,
               name: property.name,
@@ -75,9 +85,18 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
               status: "Active",
             })
             setHeroImage(images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
+            setGalleryImages(images.map(img => img.url))
+            setRoomTypes(roomTypesData)
+            setAmenities(property.amenities || [])
+            setFeatures(featuresData)
           }
         } else {
-          const images = await getPropertyImages(data.id)
+          const [images, roomTypesData, featuresData] = await Promise.all([
+            getPropertyImages(data.id),
+            getPropertyRoomTypes(data.id),
+            getPropertyFeatures(data.id),
+          ])
+          
           setPropertyData({
             id: data.id,
             name: data.name,
@@ -89,6 +108,10 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
             status: "Active",
           })
           setHeroImage(images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
+          setGalleryImages(images.map(img => img.url))
+          setRoomTypes(roomTypesData)
+          setAmenities(data.amenities || [])
+          setFeatures(featuresData)
         }
       } catch (error) {
         console.error("Error fetching property:", error)
@@ -105,13 +128,19 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
 
   const handleSave = async () => {
     try {
+      // Update main property data
       await updateProperty(propertyData.id, {
         name: propertyData.name,
         location: propertyData.location,
         type: propertyData.type,
         description: propertyData.description,
         total_rooms: propertyData.totalRooms,
+        amenities: amenities,
       })
+      
+      // TODO: Update room types, features, and gallery images
+      // For now, just save the main property data
+      
       alert("Property updated successfully!")
       setIsEditing(false)
     } catch (error: any) {
@@ -181,13 +210,29 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         </div>
 
         {/* Hero Image */}
-        <div className="relative h-64 w-full rounded-2xl overflow-hidden">
+        <div className="relative h-64 w-full rounded-2xl overflow-hidden group">
           <Image
             src={heroImage}
             alt={propertyData.name}
             fill
             className="object-cover"
           />
+          {isEditing && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const url = prompt("Enter hero image URL:", heroImage)
+                  if (url) {
+                    setHeroImage(url)
+                  }
+                }}
+              >
+                <ImageIcon className="mr-2 h-4 w-4" />
+                Change Image
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Summary Cards */}
@@ -330,52 +375,124 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           <TabsContent value="rooms" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Room List</CardTitle>
+                <CardTitle>Room Types</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Room No</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {[
-                      { no: "201", type: "Deluxe", status: "Available", price: "$150" },
-                      { no: "202", type: "Standard", status: "Occupied", price: "$120" },
-                      { no: "203", type: "Suite", status: "Maintenance", price: "$250" },
-                      { no: "204", type: "Deluxe", status: "Available", price: "$150" },
-                    ].map((room, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell className="font-medium">{room.no}</TableCell>
-                        <TableCell>{room.type}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              room.status === "Available"
-                                ? "success"
-                                : room.status === "Occupied"
-                                ? "warning"
-                                : "destructive"
-                            }
-                          >
-                            {room.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{room.price}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">
-                            Edit
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                {isEditing ? (
+                  <div className="space-y-4">
+                    {roomTypes.map((roomType, idx) => (
+                      <div key={roomType.id} className="p-4 border rounded-lg space-y-3">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label>Room Type Name</Label>
+                            <Input
+                              value={roomType.name}
+                              onChange={(e) => {
+                                const updated = [...roomTypes]
+                                updated[idx].name = e.target.value
+                                setRoomTypes(updated)
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label>Price</Label>
+                            <Input
+                              type="number"
+                              value={roomType.price}
+                              onChange={(e) => {
+                                const updated = [...roomTypes]
+                                updated[idx].price = parseFloat(e.target.value) || 0
+                                setRoomTypes(updated)
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label>Beds</Label>
+                            <Input
+                              value={roomType.beds}
+                              onChange={(e) => {
+                                const updated = [...roomTypes]
+                                updated[idx].beds = e.target.value
+                                setRoomTypes(updated)
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label>Size</Label>
+                            <Input
+                              value={roomType.size}
+                              onChange={(e) => {
+                                const updated = [...roomTypes]
+                                updated[idx].size = e.target.value
+                                setRoomTypes(updated)
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label>Description</Label>
+                          <Textarea
+                            value={roomType.description || ""}
+                            onChange={(e) => {
+                              const updated = [...roomTypes]
+                              updated[idx].description = e.target.value
+                              setRoomTypes(updated)
+                            }}
+                            rows={2}
+                          />
+                        </div>
+                      </div>
                     ))}
-                  </TableBody>
-                </Table>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setRoomTypes([...roomTypes, {
+                          id: `new-${Date.now()}`,
+                          property_id: propertyData.id,
+                          name: "New Room Type",
+                          price: 0,
+                          beds: "",
+                          size: "",
+                          image_url: null,
+                          max_guests: 2,
+                          description: null,
+                          amenities: null,
+                          created_at: new Date().toISOString(),
+                          updated_at: new Date().toISOString(),
+                        }])
+                      }}
+                    >
+                      Add Room Type
+                    </Button>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>Beds</TableHead>
+                        <TableHead>Size</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {roomTypes.length > 0 ? roomTypes.map((roomType) => (
+                        <TableRow key={roomType.id}>
+                          <TableCell className="font-medium">{roomType.name}</TableCell>
+                          <TableCell>${roomType.price}</TableCell>
+                          <TableCell>{roomType.beds}</TableCell>
+                          <TableCell>{roomType.size}</TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground">
+                            No room types found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -386,36 +503,69 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                 <CardTitle>Pricing Table</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Room Type</TableHead>
-                      <TableHead>Base Price</TableHead>
-                      <TableHead>Peak Season</TableHead>
-                      <TableHead>Off Season</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {[
-                      { type: "Standard", base: "$120", peak: "$180", off: "$100" },
-                      { type: "Deluxe", base: "$150", peak: "$220", off: "$130" },
-                      { type: "Suite", base: "$250", peak: "$350", off: "$200" },
-                    ].map((pricing, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell className="font-medium">{pricing.type}</TableCell>
-                        <TableCell>{pricing.base}</TableCell>
-                        <TableCell>{pricing.peak}</TableCell>
-                        <TableCell>{pricing.off}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">
-                            Edit
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                {isEditing ? (
+                  <div className="space-y-4">
+                    {roomTypes.map((roomType, idx) => (
+                      <div key={roomType.id} className="p-4 border rounded-lg">
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <Label>Room Type</Label>
+                            <Input value={roomType.name} disabled />
+                          </div>
+                          <div>
+                            <Label>Base Price</Label>
+                            <Input
+                              type="number"
+                              value={roomType.price}
+                              onChange={(e) => {
+                                const updated = [...roomTypes]
+                                updated[idx].price = parseFloat(e.target.value) || 0
+                                setRoomTypes(updated)
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label>Max Guests</Label>
+                            <Input
+                              type="number"
+                              value={roomType.max_guests}
+                              onChange={(e) => {
+                                const updated = [...roomTypes]
+                                updated[idx].max_guests = parseInt(e.target.value) || 2
+                                setRoomTypes(updated)
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Room Type</TableHead>
+                        <TableHead>Base Price</TableHead>
+                        <TableHead>Max Guests</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {roomTypes.length > 0 ? roomTypes.map((roomType) => (
+                        <TableRow key={roomType.id}>
+                          <TableCell className="font-medium">{roomType.name}</TableCell>
+                          <TableCell>${roomType.price}</TableCell>
+                          <TableCell>{roomType.max_guests}</TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center text-muted-foreground">
+                            No pricing data found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -426,26 +576,76 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                 <CardTitle>Amenities</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {[
-                    "Wi-Fi",
-                    "Swimming Pool",
-                    "Gym",
-                    "Spa",
-                    "Restaurant",
-                    "Parking",
-                    "Room Service",
-                    "Laundry",
-                    "Business Center",
-                  ].map((amenity) => (
-                    <div
-                      key={amenity}
-                      className="flex items-center gap-2 p-3 border rounded-xl"
-                    >
-                      <Badge variant="secondary">{amenity}</Badge>
+                {isEditing ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {[
+                        "Wi-Fi",
+                        "Swimming Pool",
+                        "Gym",
+                        "Spa",
+                        "Restaurant",
+                        "Parking",
+                        "Room Service",
+                        "Laundry",
+                        "Business Center",
+                        "Air Conditioning",
+                        "TV",
+                        "Mini Bar",
+                      ].map((amenity) => (
+                        <label
+                          key={amenity}
+                          className="flex items-center gap-2 p-3 border rounded-xl cursor-pointer hover:bg-accent"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={amenities.includes(amenity)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setAmenities([...amenities, amenity])
+                              } else {
+                                setAmenities(amenities.filter(a => a !== amenity))
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          <span className="text-sm">{amenity}</span>
+                        </label>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                    <div>
+                      <Label>Custom Amenity</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          id="custom-amenity"
+                          placeholder="Add custom amenity"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.currentTarget.value) {
+                              const value = e.currentTarget.value.trim()
+                              if (value && !amenities.includes(value)) {
+                                setAmenities([...amenities, value])
+                                e.currentTarget.value = ''
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {amenities.length > 0 ? amenities.map((amenity) => (
+                      <div
+                        key={amenity}
+                        className="flex items-center gap-2 p-3 border rounded-xl"
+                      >
+                        <Badge variant="secondary">{amenity}</Badge>
+                      </div>
+                    )) : (
+                      <p className="text-muted-foreground">No amenities added</p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -455,28 +655,76 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Gallery</CardTitle>
-                  <Button>
-                    <ImageIcon className="mr-2 h-4 w-4" />
-                    Add Images
-                  </Button>
+                  {isEditing && (
+                    <Button
+                      onClick={() => {
+                        const url = prompt("Enter image URL:")
+                        if (url) {
+                          setGalleryImages([...galleryImages, url])
+                        }
+                      }}
+                    >
+                      <ImageIcon className="mr-2 h-4 w-4" />
+                      Add Image URL
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                    <div
-                      key={i}
-                      className="relative h-32 w-full rounded-xl overflow-hidden"
-                    >
-                      <Image
-                        src={`https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&sig=${i}`}
-                        alt={`Gallery ${i}`}
-                        fill
-                        className="object-cover"
-                      />
+                {isEditing ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {galleryImages.map((imageUrl, idx) => (
+                        <div
+                          key={idx}
+                          className="relative h-32 w-full rounded-xl overflow-hidden group"
+                        >
+                          <Image
+                            src={imageUrl}
+                            alt={`Gallery ${idx + 1}`}
+                            fill
+                            className="object-cover"
+                          />
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => {
+                              setGalleryImages(galleryImages.filter((_, i) => i !== idx))
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                    {galleryImages.length === 0 && (
+                      <p className="text-center text-muted-foreground py-8">
+                        No images in gallery. Click "Add Image URL" to add images.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {galleryImages.length > 0 ? galleryImages.map((imageUrl, idx) => (
+                      <div
+                        key={idx}
+                        className="relative h-32 w-full rounded-xl overflow-hidden"
+                      >
+                        <Image
+                          src={imageUrl}
+                          alt={`Gallery ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )) : (
+                      <p className="text-muted-foreground col-span-full text-center py-8">
+                        No images in gallery
+                      </p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

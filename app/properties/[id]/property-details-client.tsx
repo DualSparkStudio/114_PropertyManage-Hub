@@ -373,7 +373,6 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="rooms">Rooms</TabsTrigger>
-            <TabsTrigger value="pricing">Pricing</TabsTrigger>
             <TabsTrigger value="amenities">Amenities</TabsTrigger>
             <TabsTrigger value="gallery">Gallery</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
@@ -571,7 +570,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                           <div>
                             <Label>Room Type Name</Label>
                             <Input
@@ -584,7 +583,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                             />
                           </div>
                           <div>
-                            <Label>Price</Label>
+                            <Label>Price (per night)</Label>
                             <Input
                               type="number"
                               value={roomType.price}
@@ -617,6 +616,34 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                               }}
                             />
                           </div>
+                          <div>
+                            <Label>Max Guests</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={roomType.max_guests || 2}
+                              onChange={(e) => {
+                                const updated = [...roomTypes]
+                                updated[idx].max_guests = parseInt(e.target.value) || 2
+                                setRoomTypes(updated)
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label>Additional Price per Extra Guest</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={roomType.additional_price_per_extra_guest || 0}
+                              onChange={(e) => {
+                                const updated = [...roomTypes]
+                                updated[idx].additional_price_per_extra_guest = parseFloat(e.target.value) || 0
+                                setRoomTypes(updated)
+                              }}
+                              placeholder="0.00"
+                            />
+                          </div>
                         </div>
                         <div>
                           <Label>Description</Label>
@@ -645,6 +672,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                           image_url: null,
                           image_urls: [],
                           max_guests: 2,
+                          additional_price_per_extra_guest: 0,
                           description: null,
                           amenities: null,
                           created_at: new Date().toISOString(),
@@ -685,7 +713,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                           ) : null}
                           <div className="flex-1">
                             <h4 className="font-semibold">{roomType.name}</h4>
-                            <div className="grid grid-cols-3 gap-4 mt-2 text-sm">
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-2 text-sm">
                               <div>
                                 <span className="text-muted-foreground">Price: </span>
                                 <span className="font-medium">${roomType.price}</span>
@@ -697,6 +725,14 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                               <div>
                                 <span className="text-muted-foreground">Size: </span>
                                 <span className="font-medium">{roomType.size}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Max Guests: </span>
+                                <span className="font-medium">{roomType.max_guests || 2}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Extra Guest: </span>
+                                <span className="font-medium">${roomType.additional_price_per_extra_guest || 0}</span>
                               </div>
                             </div>
                             {roomType.description && (
@@ -716,79 +752,6 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                       </p>
                     )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="pricing" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pricing Table</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isEditing ? (
-                  <div className="space-y-4">
-                    {roomTypes.map((roomType, idx) => (
-                      <div key={roomType.id} className="p-4 border rounded-lg">
-                        <div className="grid grid-cols-3 gap-4">
-                          <div>
-                            <Label>Room Type</Label>
-                            <Input value={roomType.name} disabled />
-                          </div>
-                          <div>
-                            <Label>Base Price</Label>
-                            <Input
-                              type="number"
-                              value={roomType.price}
-                              onChange={(e) => {
-                                const updated = [...roomTypes]
-                                updated[idx].price = parseFloat(e.target.value) || 0
-                                setRoomTypes(updated)
-                              }}
-                            />
-                          </div>
-                          <div>
-                            <Label>Max Guests</Label>
-                            <Input
-                              type="number"
-                              value={roomType.max_guests}
-                              onChange={(e) => {
-                                const updated = [...roomTypes]
-                                updated[idx].max_guests = parseInt(e.target.value) || 2
-                                setRoomTypes(updated)
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Room Type</TableHead>
-                        <TableHead>Base Price</TableHead>
-                        <TableHead>Max Guests</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {roomTypes.length > 0 ? roomTypes.map((roomType) => (
-                        <TableRow key={roomType.id}>
-                          <TableCell className="font-medium">{roomType.name}</TableCell>
-                          <TableCell>${roomType.price}</TableCell>
-                          <TableCell>{roomType.max_guests}</TableCell>
-                        </TableRow>
-                      )) : (
-                        <TableRow>
-                          <TableCell colSpan={3} className="text-center text-muted-foreground">
-                            No pricing data found
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
                 )}
               </CardContent>
             </Card>

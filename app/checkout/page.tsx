@@ -9,13 +9,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { getPropertyBySlug, getPropertyImages } from "@/lib/supabase/properties"
+import { getPropertyById, getPropertyImages } from "@/lib/supabase/properties"
 import type { Property } from "@/lib/types/database"
 
 function CheckoutContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const propertySlug = searchParams.get("property") || ""
+  const propertyId = searchParams.get("property") || ""
   const checkIn = searchParams.get("checkIn") || ""
   const checkOut = searchParams.get("checkOut") || ""
   const guests = Number(searchParams.get("guests")) || 2
@@ -26,12 +26,12 @@ function CheckoutContent() {
 
   useEffect(() => {
     async function fetchProperty() {
-      if (!propertySlug) {
+      if (!propertyId) {
         setLoading(false)
         return
       }
       try {
-        const prop = await getPropertyBySlug(propertySlug)
+        const prop = await getPropertyById(propertyId)
         if (prop) {
           setProperty(prop)
           const images = await getPropertyImages(prop.id)
@@ -44,7 +44,7 @@ function CheckoutContent() {
       }
     }
     fetchProperty()
-  }, [propertySlug])
+  }, [propertyId])
 
   const nights = checkIn && checkOut && property
     ? Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24))

@@ -10,17 +10,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Bed, Users, Wifi, Car, Star, Home, Mountain, Sparkles, Info, Phone, Share2 } from "lucide-react"
-import { getPropertyBySlug, getPropertyImages } from "@/lib/supabase/properties"
+import { getPropertyById, getPropertyImages } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
-import { getSlugFromUrl } from "@/lib/utils/get-slug-from-url"
 import type { Property } from "@/lib/types/database"
 
 interface PropertyHomeClientProps {
-  propertySlug: string
+  propertyId: string
 }
 
-export function PropertyHomeClient({ propertySlug }: PropertyHomeClientProps) {
+export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
   const router = useRouter()
   const [property, setProperty] = useState<Property | null>(null)
   const [images, setImages] = useState<string[]>([])
@@ -32,12 +31,8 @@ export function PropertyHomeClient({ propertySlug }: PropertyHomeClientProps) {
   useEffect(() => {
     async function fetchProperty() {
       try {
-        // If propertySlug is empty, get it from the URL
-        // This handles cases where the slug changed and the static page doesn't exist
-        let slug = propertySlug || getSlugFromUrl()
-        
-        if (slug) {
-          const prop = await getPropertyBySlug(slug)
+        if (propertyId) {
+          const prop = await getPropertyById(propertyId)
           if (prop) {
             setProperty(prop)
             const propertyImages = await getPropertyImages(prop.id)
@@ -51,14 +46,14 @@ export function PropertyHomeClient({ propertySlug }: PropertyHomeClientProps) {
       }
     }
     fetchProperty()
-  }, [propertySlug])
+  }, [propertyId])
 
   const handleBookNow = () => {
     if (!checkIn || !checkOut) {
       alert("Please select check-in and check-out dates")
       return
     }
-    router.push(`/checkout?property=${propertySlug}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`)
+    router.push(`/checkout?property=${propertyId}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`)
   }
 
   const handleShare = async () => {
@@ -91,7 +86,7 @@ export function PropertyHomeClient({ propertySlug }: PropertyHomeClientProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar variant="property" propertySlug={propertySlug} />
+        <Navbar variant="property" propertyId={propertyId} />
         <div className="container mx-auto px-4 md:px-6 py-6 md:py-8">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading property...</p>
@@ -105,7 +100,7 @@ export function PropertyHomeClient({ propertySlug }: PropertyHomeClientProps) {
   if (!property) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar variant="property" propertySlug={propertySlug} />
+        <Navbar variant="property" propertyId={propertyId} />
         <div className="container mx-auto px-4 md:px-6 py-6 md:py-8">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Property not found</p>
@@ -118,7 +113,7 @@ export function PropertyHomeClient({ propertySlug }: PropertyHomeClientProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar variant="property" propertySlug={propertySlug} />
+      <Navbar variant="property" propertyId={propertyId} />
 
       <div className="container mx-auto px-4 md:px-6 py-6 md:py-8">
         <div className="grid gap-8 lg:grid-cols-3">

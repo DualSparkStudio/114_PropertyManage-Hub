@@ -68,8 +68,8 @@ const PropertyCard = memo(function PropertyCard({ property }: { property: any })
       </CardContent>
       <CardFooter className="p-6 pt-0">
         <Button asChild className="w-full">
-          <OptimizedLink 
-            href={`/property/${property.slug}`} 
+            <OptimizedLink 
+            href={`/property/${property.id}`} 
             target="_blank" 
             rel="noopener noreferrer"
           >
@@ -96,7 +96,6 @@ export default function ExplorePage() {
             const images = await getPropertyImages(property.id)
             return {
               id: property.id,
-              slug: property.slug,
               name: property.name,
               type: property.type,
               location: property.location,

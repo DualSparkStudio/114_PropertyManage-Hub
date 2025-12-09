@@ -11,7 +11,7 @@ import { Navbar } from "@/components/layout/navbar"
 import type { Attraction } from "@/lib/types/database"
 
 export default function AttractionsPage() {
-  const [allAttractions, setAllAttractions] = useState<(Attraction & { property_name?: string; property_slug?: string; property_location?: string })[]>([])
+  const [allAttractions, setAllAttractions] = useState<(Attraction & { property_name?: string; property_id?: string; property_location?: string })[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function AttractionsPage() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {allAttractions.map((attraction, idx) => (
-              <Card key={`${attraction.property_slug}-${attraction.name}-${idx}`}>
+              <Card key={`${attraction.property_id}-${attraction.name}-${idx}`}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 flex-1">
@@ -92,9 +92,9 @@ export default function AttractionsPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-3">{attraction.description || "No description available."}</p>
-                  {attraction.property_slug && (
+                  {attraction.property_id && (
                     <Link 
-                      href={`/property/${attraction.property_slug}/attractions`}
+                      href={`/property/${attraction.property_id}/attractions`}
                       className="text-sm text-primary hover:underline"
                     >
                       View property →

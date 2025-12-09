@@ -3,17 +3,16 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Mountain, MapPin } from "lucide-react"
-import { getPropertyBySlug, getPropertyAttractions } from "@/lib/supabase/properties"
+import { getPropertyById, getPropertyAttractions } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
-import { getSlugFromUrl } from "@/lib/utils/get-slug-from-url"
 import type { Property, Attraction } from "@/lib/types/database"
 
 interface PropertyAttractionsClientProps {
-  propertySlug: string
+  propertyId: string
 }
 
-export function PropertyAttractionsClient({ propertySlug }: PropertyAttractionsClientProps) {
+export function PropertyAttractionsClient({ propertyId }: PropertyAttractionsClientProps) {
   const [property, setProperty] = useState<Property | null>(null)
   const [attractions, setAttractions] = useState<Attraction[]>([])
   const [loading, setLoading] = useState(true)
@@ -21,8 +20,7 @@ export function PropertyAttractionsClient({ propertySlug }: PropertyAttractionsC
   useEffect(() => {
     async function fetchData() {
       try {
-        const slug = propertySlug || getSlugFromUrl()
-        const prop = await getPropertyBySlug(slug)
+        const prop = await getPropertyById(propertyId)
         if (prop) {
           setProperty(prop)
           const attrs = await getPropertyAttractions(prop.id)
@@ -35,12 +33,12 @@ export function PropertyAttractionsClient({ propertySlug }: PropertyAttractionsC
       }
     }
     fetchData()
-  }, [propertySlug])
+  }, [propertyId])
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar variant="property" propertySlug={propertySlug} />
+        <Navbar variant="property" propertyId={propertyId} />
         <div className="container mx-auto px-6 py-12">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading attractions...</p>
@@ -54,7 +52,7 @@ export function PropertyAttractionsClient({ propertySlug }: PropertyAttractionsC
   if (!property) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar variant="property" propertySlug={propertySlug} />
+        <Navbar variant="property" propertyId={propertyId} />
         <div className="container mx-auto px-6 py-12">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Property not found</p>
@@ -67,7 +65,7 @@ export function PropertyAttractionsClient({ propertySlug }: PropertyAttractionsC
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar variant="property" propertySlug={propertySlug} />
+      <Navbar variant="property" propertyId={propertyId} />
 
       <div className="container mx-auto px-6 py-12">
         <div className="mb-8">

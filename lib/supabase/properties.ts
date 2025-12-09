@@ -356,12 +356,12 @@ export async function deleteRoomType(roomTypeId: string): Promise<void> {
 /**
  * Get all room types across all properties
  */
-export async function getAllRoomTypes(): Promise<(RoomType & { property_name?: string; property_slug?: string; property_location?: string })[]> {
+export async function getAllRoomTypes(): Promise<(RoomType & { property_name?: string; property_id?: string; property_location?: string })[]> {
   const { data, error } = await supabase
     .from('room_types')
     .select(`
       *,
-      properties!inner(name, slug, location)
+      properties!inner(id, name, location)
     `)
     .order('price', { ascending: true })
 
@@ -373,7 +373,7 @@ export async function getAllRoomTypes(): Promise<(RoomType & { property_name?: s
   return (data || []).map((rt: any) => ({
     ...rt,
     property_name: rt.properties?.name,
-    property_slug: rt.properties?.slug,
+    property_id: rt.properties?.id,
     property_location: rt.properties?.location,
   }))
 }
@@ -381,12 +381,12 @@ export async function getAllRoomTypes(): Promise<(RoomType & { property_name?: s
 /**
  * Get all features across all properties
  */
-export async function getAllFeatures(): Promise<(Feature & { property_name?: string; property_slug?: string })[]> {
+export async function getAllFeatures(): Promise<(Feature & { property_name?: string; property_id?: string })[]> {
   const { data, error } = await supabase
     .from('features')
     .select(`
       *,
-      properties!inner(name, slug)
+      properties!inner(id, name)
     `)
     .order('created_at', { ascending: true })
 
@@ -398,19 +398,19 @@ export async function getAllFeatures(): Promise<(Feature & { property_name?: str
   return (data || []).map((feat: any) => ({
     ...feat,
     property_name: feat.properties?.name,
-    property_slug: feat.properties?.slug,
+    property_id: feat.properties?.id,
   }))
 }
 
 /**
  * Get all attractions across all properties
  */
-export async function getAllAttractions(): Promise<(Attraction & { property_name?: string; property_slug?: string; property_location?: string })[]> {
+export async function getAllAttractions(): Promise<(Attraction & { property_name?: string; property_id?: string; property_location?: string })[]> {
   const { data, error } = await supabase
     .from('attractions')
     .select(`
       *,
-      properties!inner(name, slug, location)
+      properties!inner(id, name, location)
     `)
     .order('created_at', { ascending: true })
 
@@ -422,7 +422,7 @@ export async function getAllAttractions(): Promise<(Attraction & { property_name
   return (data || []).map((attr: any) => ({
     ...attr,
     property_name: attr.properties?.name,
-    property_slug: attr.properties?.slug,
+    property_id: attr.properties?.id,
     property_location: attr.properties?.location,
   }))
 }

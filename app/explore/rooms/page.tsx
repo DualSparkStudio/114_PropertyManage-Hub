@@ -13,7 +13,7 @@ import { OptimizedLink } from "@/components/optimized-link"
 import type { RoomType } from "@/lib/types/database"
 
 export default function RoomsPage() {
-  const [allRooms, setAllRooms] = useState<(RoomType & { property_name?: string; property_slug?: string; property_location?: string; image_urls?: string[] })[]>([])
+  const [allRooms, setAllRooms] = useState<(RoomType & { property_name?: string; property_id?: string; property_location?: string; image_urls?: string[] })[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -83,7 +83,7 @@ export default function RoomsPage() {
                 : room.image_url || "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"
               
               return (
-                <Card key={`${room.property_slug}-${room.id}-${idx}`} className="overflow-hidden">
+                <Card key={`${room.property_id}-${room.id}-${idx}`} className="overflow-hidden">
                   <div className="relative h-48 w-full">
                     <Image
                       src={roomImage}
@@ -128,9 +128,9 @@ export default function RoomsPage() {
                         <span className="text-2xl font-bold">₹{room.price}</span>
                         <span className="text-sm text-muted-foreground">/night</span>
                       </div>
-                      {room.property_slug && (
+                      {room.property_id && (
                         <Button asChild>
-                          <OptimizedLink href={`/property/${room.property_slug}`} target="_blank" rel="noopener noreferrer">
+                          <OptimizedLink href={`/property/${room.property_id}`} target="_blank" rel="noopener noreferrer">
                             View Property
                           </OptimizedLink>
                         </Button>

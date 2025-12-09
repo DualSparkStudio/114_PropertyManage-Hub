@@ -9,7 +9,7 @@ import { Navbar } from "@/components/layout/navbar"
 import type { Feature } from "@/lib/types/database"
 
 export default function FeaturesPage() {
-  const [allFeatures, setAllFeatures] = useState<(Feature & { property_name?: string; property_slug?: string })[]>([])
+  const [allFeatures, setAllFeatures] = useState<(Feature & { property_name?: string; property_id?: string })[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function FeaturesPage() {
               const key = `${feature.name}-${feature.icon}`
               const count = featureCounts[key] || 1
               return (
-                <Card key={`${feature.property_slug}-${key}-${idx}`}>
+                <Card key={`${feature.property_id}-${key}-${idx}`}>
                   <CardContent className="p-6 text-center">
                     {feature.icon && <div className="text-5xl mb-4">{feature.icon}</div>}
                     <h3 className="font-semibold mb-2">{feature.name}</h3>

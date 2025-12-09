@@ -6,17 +6,16 @@ import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Bed, Users, Square } from "lucide-react"
-import { getPropertyBySlug, getPropertyRoomTypes, getRoomTypeImages } from "@/lib/supabase/properties"
+import { getPropertyById, getPropertyRoomTypes, getRoomTypeImages } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
-import { getSlugFromUrl } from "@/lib/utils/get-slug-from-url"
 import type { Property, RoomType } from "@/lib/types/database"
 
 interface PropertyRoomsClientProps {
-  propertySlug: string
+  propertyId: string
 }
 
-export function PropertyRoomsClient({ propertySlug }: PropertyRoomsClientProps) {
+export function PropertyRoomsClient({ propertyId }: PropertyRoomsClientProps) {
   const [property, setProperty] = useState<Property | null>(null)
   const [roomTypes, setRoomTypes] = useState<(RoomType & { image_urls?: string[] })[]>([])
   const [loading, setLoading] = useState(true)
@@ -24,8 +23,7 @@ export function PropertyRoomsClient({ propertySlug }: PropertyRoomsClientProps) 
   useEffect(() => {
     async function fetchData() {
       try {
-        const slug = propertySlug || getSlugFromUrl()
-        const prop = await getPropertyBySlug(slug)
+        const prop = await getPropertyById(propertyId)
         if (prop) {
           setProperty(prop)
           const rooms = await getPropertyRoomTypes(prop.id)
@@ -55,12 +53,12 @@ export function PropertyRoomsClient({ propertySlug }: PropertyRoomsClientProps) 
       }
     }
     fetchData()
-  }, [propertySlug])
+  }, [propertyId])
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar variant="property" propertySlug={propertySlug} />
+        <Navbar variant="property" propertyId={propertyId} />
         <div className="container mx-auto px-6 py-12">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading rooms...</p>
@@ -74,7 +72,7 @@ export function PropertyRoomsClient({ propertySlug }: PropertyRoomsClientProps) 
   if (!property) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar variant="property" propertySlug={propertySlug} />
+        <Navbar variant="property" propertyId={propertyId} />
         <div className="container mx-auto px-6 py-12">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Property not found</p>
@@ -87,7 +85,7 @@ export function PropertyRoomsClient({ propertySlug }: PropertyRoomsClientProps) 
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar variant="property" propertySlug={propertySlug} />
+      <Navbar variant="property" propertyId={propertyId} />
 
       <div className="container mx-auto px-6 py-12">
         <div className="mb-8">
@@ -142,7 +140,7 @@ export function PropertyRoomsClient({ propertySlug }: PropertyRoomsClientProps) 
                           <span className="text-sm text-muted-foreground">/night</span>
                         </div>
                         <Button asChild>
-                          <Link href={`/property/${propertySlug}`}>Book Now</Link>
+                          <Link href={`/property/${propertyId}`}>Book Now</Link>
                         </Button>
                       </div>
                     </div>

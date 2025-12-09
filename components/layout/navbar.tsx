@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
 
 interface NavbarProps {
   variant?: "explore" | "property"
-  propertySlug?: string
+  propertyId?: string
 }
 
 // Icon mapping for nav items
@@ -29,7 +29,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Phone,
 }
 
-export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
+export function Navbar({ variant = "explore", propertyId }: NavbarProps) {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -42,14 +42,14 @@ export function Navbar({ variant = "explore", propertySlug }: NavbarProps) {
     { href: "/explore/contact", label: "Contact", icon: "Phone" },
   ]
 
-  const propertyNavItems = propertySlug
+  const propertyNavItems = propertyId
     ? [
-        { href: `/property/${propertySlug}`, label: "Home", icon: "Home" },
-        { href: `/property/${propertySlug}/rooms`, label: "Rooms", icon: "Bed" },
-        { href: `/property/${propertySlug}/attractions`, label: "Attractions", icon: "Mountain" },
-        { href: `/property/${propertySlug}/features`, label: "Features", icon: "Sparkles" },
-        { href: `/property/${propertySlug}/about`, label: "About", icon: "Info" },
-        { href: `/property/${propertySlug}/contact`, label: "Contact", icon: "Phone" },
+        { href: `/property/${propertyId}`, label: "Home", icon: "Home" },
+        { href: `/property/${propertyId}/rooms`, label: "Rooms", icon: "Bed" },
+        { href: `/property/${propertyId}/attractions`, label: "Attractions", icon: "Mountain" },
+        { href: `/property/${propertyId}/features`, label: "Features", icon: "Sparkles" },
+        { href: `/property/${propertyId}/about`, label: "About", icon: "Info" },
+        { href: `/property/${propertyId}/contact`, label: "Contact", icon: "Phone" },
       ]
     : []
 

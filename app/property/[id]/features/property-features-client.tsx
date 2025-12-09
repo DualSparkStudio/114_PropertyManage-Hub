@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getPropertyBySlug, getPropertyFeatures } from "@/lib/supabase/properties"
+import { getPropertyById, getPropertyFeatures } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
-import { getSlugFromUrl } from "@/lib/utils/get-slug-from-url"
 import type { Property, Feature } from "@/lib/types/database"
 
 interface PropertyFeaturesClientProps {
-  propertySlug: string
+  propertyId: string
 }
 
-export function PropertyFeaturesClient({ propertySlug }: PropertyFeaturesClientProps) {
+export function PropertyFeaturesClient({ propertyId }: PropertyFeaturesClientProps) {
   const [property, setProperty] = useState<Property | null>(null)
   const [features, setFeatures] = useState<Feature[]>([])
   const [loading, setLoading] = useState(true)
@@ -20,8 +19,7 @@ export function PropertyFeaturesClient({ propertySlug }: PropertyFeaturesClientP
   useEffect(() => {
     async function fetchData() {
       try {
-        const slug = propertySlug || getSlugFromUrl()
-        const prop = await getPropertyBySlug(slug)
+        const prop = await getPropertyById(propertyId)
         if (prop) {
           setProperty(prop)
           const feats = await getPropertyFeatures(prop.id)
@@ -34,12 +32,12 @@ export function PropertyFeaturesClient({ propertySlug }: PropertyFeaturesClientP
       }
     }
     fetchData()
-  }, [propertySlug])
+  }, [propertyId])
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar variant="property" propertySlug={propertySlug} />
+        <Navbar variant="property" propertyId={propertyId} />
         <div className="container mx-auto px-6 py-12">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading features...</p>
@@ -53,7 +51,7 @@ export function PropertyFeaturesClient({ propertySlug }: PropertyFeaturesClientP
   if (!property) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar variant="property" propertySlug={propertySlug} />
+        <Navbar variant="property" propertyId={propertyId} />
         <div className="container mx-auto px-6 py-12">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Property not found</p>
@@ -66,7 +64,7 @@ export function PropertyFeaturesClient({ propertySlug }: PropertyFeaturesClientP
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar variant="property" propertySlug={propertySlug} />
+      <Navbar variant="property" propertyId={propertyId} />
 
       <div className="container mx-auto px-6 py-12">
         <div className="mb-8">

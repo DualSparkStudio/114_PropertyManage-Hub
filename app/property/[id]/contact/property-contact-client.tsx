@@ -6,18 +6,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Phone, Mail, MapPin, Calendar } from "lucide-react"
-import { getPropertyBySlug, getPropertyContact } from "@/lib/supabase/properties"
+import { getPropertyById, getPropertyContact } from "@/lib/supabase/properties"
 import { supabase } from "@/lib/supabase/client"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
-import { getSlugFromUrl } from "@/lib/utils/get-slug-from-url"
 import type { Property, PropertyContact } from "@/lib/types/database"
 
 interface PropertyContactClientProps {
-  propertySlug: string
+  propertyId: string
 }
 
-export function PropertyContactClient({ propertySlug }: PropertyContactClientProps) {
+export function PropertyContactClient({ propertyId }: PropertyContactClientProps) {
   const [property, setProperty] = useState<Property | null>(null)
   const [contact, setContact] = useState<PropertyContact | null>(null)
   const [loading, setLoading] = useState(true)
@@ -31,8 +30,7 @@ export function PropertyContactClient({ propertySlug }: PropertyContactClientPro
   useEffect(() => {
     async function fetchData() {
       try {
-        const slug = propertySlug || getSlugFromUrl()
-        const prop = await getPropertyBySlug(slug)
+        const prop = await getPropertyById(propertyId)
         if (prop) {
           setProperty(prop)
           const contactData = await getPropertyContact(prop.id)
@@ -45,7 +43,7 @@ export function PropertyContactClient({ propertySlug }: PropertyContactClientPro
       }
     }
     fetchData()
-  }, [propertySlug])
+  }, [propertyId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -77,7 +75,7 @@ export function PropertyContactClient({ propertySlug }: PropertyContactClientPro
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar variant="property" propertySlug={propertySlug} />
+        <Navbar variant="property" propertyId={propertyId} />
         <div className="container mx-auto px-6 py-12">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading...</p>
@@ -91,7 +89,7 @@ export function PropertyContactClient({ propertySlug }: PropertyContactClientPro
   if (!property) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar variant="property" propertySlug={propertySlug} />
+        <Navbar variant="property" propertyId={propertyId} />
         <div className="container mx-auto px-6 py-12">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Property not found</p>
@@ -104,7 +102,7 @@ export function PropertyContactClient({ propertySlug }: PropertyContactClientPro
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar variant="property" propertySlug={propertySlug} />
+      <Navbar variant="property" propertyId={propertyId} />
 
       <div className="container mx-auto px-6 py-12">
         <div className="mb-8">

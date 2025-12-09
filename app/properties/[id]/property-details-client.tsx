@@ -12,9 +12,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { StatsCard } from "@/components/reusable/stats-card"
 import { Bed, DollarSign, TrendingUp, Image as ImageIcon, Edit, Save, X } from "lucide-react"
 import Image from "next/image"
-import { updateProperty, getPropertyBySlug, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType, getRoomTypeImages, upsertRoomTypeImages } from "@/lib/supabase/properties"
+import { updateProperty, getPropertyById, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType, getRoomTypeImages, upsertRoomTypeImages } from "@/lib/supabase/properties"
 import { supabase } from "@/lib/supabase/client"
-import { generateSlug } from "@/lib/utils/slug"
 import type { RoomType, Feature } from "@/lib/types/database"
 import {
   Table,
@@ -54,124 +53,64 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
   const [roomTypes, setRoomTypes] = useState<(RoomType & { image_urls?: string[] })[]>([])
   const [amenities, setAmenities] = useState<string[]>([])
   const [features, setFeatures] = useState<Feature[]>([])
-  const [originalName, setOriginalName] = useState<string>("")
 
   useEffect(() => {
     async function fetchProperty() {
       try {
-        // Try to get by ID first, then by slug
-        const { data, error } = await supabase
-          .from('properties')
-          .select('*')
-          .eq('id', propertyId)
-          .single()
-
-        if (error || !data) {
-          // If not found by ID, try to get by slug
-          console.log(`Property not found by ID "${propertyId}", trying slug...`)
-          const property = await getPropertyBySlug(propertyId)
-          if (property) {
-            console.log(`Property found by slug:`, property.id)
-            const [images, roomTypesData, featuresData] = await Promise.all([
-              getPropertyImages(property.id),
-              getPropertyRoomTypes(property.id),
-              getPropertyFeatures(property.id),
-            ])
-            
-            // Fetch images for each room type
-            const roomTypesWithImages = await Promise.all(
-              roomTypesData.map(async (rt) => {
-                try {
-                  const roomImages = await getRoomTypeImages(rt.id)
-                  return {
-                    ...rt,
-                    image_urls: roomImages.map(img => img.url),
-                  }
-                } catch (error: any) {
-                  // Fallback to single image_url if room_type_images table doesn't exist yet
-                  // Handle PGRST205 (table not found) and other expected errors silently
-                  if (error?.code === 'PGRST205' || error?.code === 'PGRST116' || error?.message?.includes('schema cache') || error?.message?.includes('does not exist')) {
-                    return {
-                      ...rt,
-                      image_urls: rt.image_url ? [rt.image_url] : [],
-                    }
-                  }
-                  // Re-throw unexpected errors
-                  throw error
-                }
-              })
-            )
-            
-            setPropertyData({
-              id: property.id,
-              name: property.name,
-              location: property.location,
-              type: property.type,
-              description: property.description || "",
-              totalRooms: property.total_rooms,
-              price: property.price,
-              status: "Active",
-            })
-            setOriginalName(property.name)
-            setHeroImage(images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
-            setGalleryImages(images.map(img => img.url))
-            setRoomTypes(roomTypesWithImages)
-            setAmenities(property.amenities || [])
-            setFeatures(featuresData)
-          } else {
-            console.error(`Property with id/slug "${propertyId}" not found in database. Please ensure the seed data has been run.`)
-            setLoading(false)
-            return
-          }
-        } else {
-          console.log(`Property found by ID:`, data.id)
-          const [images, roomTypesData, featuresData] = await Promise.all([
-            getPropertyImages(data.id),
-            getPropertyRoomTypes(data.id),
-            getPropertyFeatures(data.id),
-          ])
-          
-          // Fetch images for each room type
-          const roomTypesWithImages = await Promise.all(
-            roomTypesData.map(async (rt) => {
-              try {
-                const roomImages = await getRoomTypeImages(rt.id)
+        // Get property by ID
+        const property = await getPropertyById(propertyId)
+        
+        if (!property) {
+          console.error(`Property not found by ID "${propertyId}"`)
+          setLoading(false)
+          return
+        }
+        
+        const [images, roomTypesData, featuresData] = await Promise.all([
+          getPropertyImages(property.id),
+          getPropertyRoomTypes(property.id),
+          getPropertyFeatures(property.id),
+        ])
+        
+        // Fetch images for each room type
+        const roomTypesWithImages = await Promise.all(
+          roomTypesData.map(async (rt) => {
+            try {
+              const roomImages = await getRoomTypeImages(rt.id)
+              return {
+                ...rt,
+                image_urls: roomImages.map(img => img.url),
+              }
+            } catch (error: any) {
+              // Fallback to single image_url if room_type_images table doesn't exist yet
+              // Handle PGRST205 (table not found) and other expected errors silently
+              if (error?.code === 'PGRST205' || error?.code === 'PGRST116' || error?.message?.includes('schema cache') || error?.message?.includes('does not exist')) {
                 return {
                   ...rt,
-                  image_urls: roomImages.map(img => img.url),
+                  image_urls: rt.image_url ? [rt.image_url] : [],
                 }
-              } catch (error: any) {
-                // Fallback to single image_url if room_type_images table doesn't exist yet
-                // Silently handle 404/table not found errors (PGRST205 is the code for table not found)
-                if (error?.status === 404 || error?.code === 'PGRST116' || error?.code === 'PGRST205' || error?.message?.includes('relation') || error?.message?.includes('does not exist') || error?.message?.includes('schema cache')) {
-                  return {
-                    ...rt,
-                    image_urls: rt.image_url ? [rt.image_url] : [],
-                  }
-                }
-                // Re-throw other errors
-                throw error
               }
-            })
-          )
-          
-          setPropertyData({
-            id: data.id,
-            name: data.name,
-            location: data.location,
-            type: data.type,
-            description: data.description || "",
-            totalRooms: data.total_rooms,
-            price: data.price,
-            status: "Active",
+              // Re-throw unexpected errors
+              throw error
+            }
           })
-          setOriginalName(data.name)
-          setHeroImage(images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
-          setGalleryImages(images.map(img => img.url))
-          setRoomTypes(roomTypesWithImages)
-          setAmenities(data.amenities || [])
-          setFeatures(featuresData)
-        }
+        )
+        
+        setPropertyData({
+          id: property.id,
+          name: property.name,
+          location: property.location,
+          type: property.type,
+          description: property.description || "",
+          totalRooms: property.total_rooms,
+          price: property.price,
+          status: "Active",
+        })
+        setHeroImage(images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
+        setGalleryImages(images.map(img => img.url))
+        setRoomTypes(roomTypesWithImages)
+        setAmenities(property.amenities || [])
+        setFeatures(featuresData)
       } catch (error: any) {
         // Only log real errors, not expected table-not-found errors (PGRST205)
         // PGRST205 means the room_type_images table doesn't exist yet (migration not run)
@@ -203,12 +142,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         amenities: amenities || [],
       }
       
-      // If name changed, automatically update slug
-      if (propertyData.name && propertyData.name !== originalName) {
-        const newSlug = generateSlug(propertyData.name)
-        updates.slug = newSlug
-        setOriginalName(propertyData.name) // Update original name for next comparison
-      }
+      // Slug generation removed - using property ID in URLs instead
       
       // Update main property data - include ALL fields that can be edited
       // Supabase update() supports partial updates - it will only update the fields provided

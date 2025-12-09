@@ -248,24 +248,36 @@ export async function updateProperty(id: string, updates: Partial<Property>): Pr
     actualId = slugCheck.id
   }
 
-  // Now update with the correct ID
+  // Now update with the correct ID - use .maybeSingle() to handle 0 rows gracefully
   const { data, error } = await supabase
     .from('properties')
     .update(updates)
     .eq('id', actualId)
     .select()
-    .single()
 
   if (error) {
     console.error('Error updating property:', error)
     throw error
   }
 
-  if (!data) {
-    throw new Error(`Property with id "${actualId}" not found`)
+  // Check if we got any results
+  if (!data || data.length === 0) {
+    // Try to fetch the property to see if it exists
+    const { data: verifyData } = await supabase
+      .from('properties')
+      .select('id')
+      .eq('id', actualId)
+      .maybeSingle()
+    
+    if (!verifyData) {
+      throw new Error(`Property with id "${actualId}" not found`)
+    } else {
+      // Property exists but update returned no rows - might be a permissions issue
+      throw new Error(`Failed to update property. No rows were updated. This might be a permissions issue.`)
+    }
   }
 
-  return data
+  return data[0]
 }
 
 /**
@@ -312,14 +324,17 @@ export async function upsertRoomType(roomType: Partial<RoomType> & { property_id
       .update(updateData)
       .eq('id', id!)
       .select()
-      .single()
 
     if (error) {
       console.error('Error updating room type:', error)
       throw error
     }
 
-    return data
+    if (!data || data.length === 0) {
+      throw new Error(`Room type with id "${id}" not found or could not be updated`)
+    }
+
+    return data[0]
   }
 }
 
@@ -342,47 +357,79 @@ export async function deleteRoomType(roomTypeId: string): Promise<void> {
  * Get images for a room type
  */
 export async function getRoomTypeImages(roomTypeId: string): Promise<Array<{ id: string; url: string; alt_text: string | null; order_index: number }>> {
-  const { data, error } = await supabase
-    .from('room_type_images')
-    .select('id, url, alt_text, order_index')
-    .eq('room_type_id', roomTypeId)
-    .order('order_index', { ascending: true })
+  try {
+    const { data, error } = await supabase
+      .from('room_type_images')
+      .select('id, url, alt_text, order_index')
+      .eq('room_type_id', roomTypeId)
+      .order('order_index', { ascending: true })
 
-  if (error) {
-    console.error('Error fetching room type images:', error)
+    // If table doesn't exist (404), return empty array
+    if (error) {
+      if (error.code === 'PGRST116' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
+        return []
+      }
+      console.error('Error fetching room type images:', error)
+      throw error
+    }
+
+    return data || []
+  } catch (error: any) {
+    // Handle 404 or table not found errors gracefully
+    if (error?.code === 'PGRST116' || error?.message?.includes('relation') || error?.message?.includes('does not exist') || error?.status === 404) {
+      return []
+    }
     throw error
   }
-
-  return data || []
 }
 
 /**
  * Upsert room type images (replace all images for a room type)
  */
 export async function upsertRoomTypeImages(roomTypeId: string, imageUrls: string[]): Promise<void> {
-  // Delete existing images
-  await supabase
-    .from('room_type_images')
-    .delete()
-    .eq('room_type_id', roomTypeId)
-
-  // Insert new images
-  if (imageUrls.length > 0) {
-    const images = imageUrls.map((url, index) => ({
-      room_type_id: roomTypeId,
-      url,
-      alt_text: null,
-      order_index: index,
-    }))
-
-    const { error } = await supabase
+  try {
+    // Delete existing images
+    const { error: deleteError } = await supabase
       .from('room_type_images')
-      .insert(images)
+      .delete()
+      .eq('room_type_id', roomTypeId)
 
-    if (error) {
-      console.error('Error inserting room type images:', error)
-      throw error
+    // If table doesn't exist, skip (table might not be created yet)
+    if (deleteError && deleteError.code !== 'PGRST116' && !deleteError.message?.includes('relation') && !deleteError.message?.includes('does not exist') && deleteError.status !== 404) {
+      console.error('Error deleting room type images:', deleteError)
+      throw deleteError
     }
+
+    // Insert new images
+    if (imageUrls.length > 0) {
+      const images = imageUrls.map((url, index) => ({
+        room_type_id: roomTypeId,
+        url,
+        alt_text: null,
+        order_index: index,
+      }))
+
+      const { error: insertError } = await supabase
+        .from('room_type_images')
+        .insert(images)
+
+      if (insertError) {
+        // If table doesn't exist, just log a warning instead of throwing
+        if (insertError.code === 'PGRST116' || insertError.message?.includes('relation') || insertError.message?.includes('does not exist') || insertError.status === 404) {
+          console.warn('room_type_images table does not exist yet. Please run the migration SQL.')
+          return
+        }
+        console.error('Error inserting room type images:', insertError)
+        throw insertError
+      }
+    }
+  } catch (error: any) {
+    // Handle table not found errors gracefully
+    if (error?.code === 'PGRST116' || error?.message?.includes('relation') || error?.message?.includes('does not exist') || error?.status === 404) {
+      console.warn('room_type_images table does not exist yet. Please run the migration SQL.')
+      return
+    }
+    throw error
   }
 }
 

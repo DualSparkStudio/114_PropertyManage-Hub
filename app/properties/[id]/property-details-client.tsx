@@ -132,12 +132,17 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                   ...rt,
                   image_urls: roomImages.map(img => img.url),
                 }
-              } catch (error) {
+              } catch (error: any) {
                 // Fallback to single image_url if room_type_images table doesn't exist yet
-                return {
-                  ...rt,
-                  image_urls: rt.image_url ? [rt.image_url] : [],
+                // Silently handle 404/table not found errors
+                if (error?.status === 404 || error?.code === 'PGRST116' || error?.message?.includes('relation') || error?.message?.includes('does not exist')) {
+                  return {
+                    ...rt,
+                    image_urls: rt.image_url ? [rt.image_url] : [],
+                  }
                 }
+                // Re-throw other errors
+                throw error
               }
             })
           )
@@ -172,16 +177,74 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
   }
 
   const handleSave = async () => {
+    setLoading(true)
     try {
-      // Update main property data
+      // Update main property data - include ALL fields that can be edited
+      // Supabase update() supports partial updates - it will only update the fields provided
+      // This means even if only one field is changed, it will be saved
       await updateProperty(propertyData.id, {
-        name: propertyData.name,
-        location: propertyData.location,
-        type: propertyData.type,
-        description: propertyData.description,
-        total_rooms: propertyData.totalRooms,
-        amenities: amenities,
+        name: propertyData.name || '',
+        location: propertyData.location || '',
+        type: propertyData.type || '',
+        description: propertyData.description || '',
+        total_rooms: propertyData.totalRooms || 0,
+        price: propertyData.price || 0,
+        amenities: amenities || [],
       })
+      
+      // Update gallery images (all images including hero)
+      // This ensures hero image and gallery are always in sync
+      if (galleryImages.length > 0) {
+        // Delete all existing images for this property
+        const { error: deleteError } = await supabase
+          .from('property_images')
+          .delete()
+          .eq('property_id', propertyData.id)
+        
+        if (deleteError) {
+          console.warn('Error deleting old images:', deleteError)
+        }
+        
+        // Insert all gallery images (including hero as first image)
+        const imagesToInsert = galleryImages.map((url, index) => ({
+          property_id: propertyData.id,
+          url: url,
+          alt_text: `${propertyData.name} image ${index + 1}`,
+          order_index: index,
+        }))
+        
+        const { error: insertError } = await supabase
+          .from('property_images')
+          .insert(imagesToInsert)
+        
+        if (insertError) {
+          console.error('Error inserting gallery images:', insertError)
+          throw insertError
+        }
+      } else if (heroImage) {
+        // If only hero image is set but no gallery, update just the hero
+        // Delete existing hero image (order_index 0)
+        await supabase
+          .from('property_images')
+          .delete()
+          .eq('property_id', propertyData.id)
+          .eq('order_index', 0)
+        
+        // Insert new hero image
+        const { error: heroError } = await supabase
+          .from('property_images')
+          .insert({
+            property_id: propertyData.id,
+            url: heroImage,
+            alt_text: `${propertyData.name} hero image`,
+            order_index: 0,
+          })
+        
+        if (heroError) {
+          console.error('Error inserting hero image:', heroError)
+          throw heroError
+        }
+      }
       
       // Update room types
       for (const roomType of roomTypes) {
@@ -196,20 +259,33 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         if (image_urls && image_urls.length > 0) {
           try {
             await upsertRoomTypeImages(savedRoomType.id, image_urls)
-          } catch (error) {
-            console.warn('Could not save room type images (table might not exist yet):', error)
-            // Fallback: save first image in image_url field
-            if (image_urls[0]) {
+            // Fallback: also save first image in image_url field for backward compatibility
+            if (image_urls[0] && image_urls[0] !== savedRoomType.image_url) {
               await upsertRoomType({
                 ...savedRoomType,
                 image_url: image_urls[0],
               })
             }
+          } catch (error: any) {
+            // If table doesn't exist, just save first image in image_url field
+            if (error?.status === 404 || error?.code === 'PGRST116' || error?.message?.includes('relation') || error?.message?.includes('does not exist')) {
+              console.warn('room_type_images table does not exist yet. Saving first image in image_url field.')
+              if (image_urls[0]) {
+                await upsertRoomType({
+                  ...savedRoomType,
+                  image_url: image_urls[0],
+                })
+              }
+            } else {
+              // Re-throw other errors
+              throw error
+            }
           }
         }
       }
       
-      // TODO: Update gallery images and features
+      // Update features if they were modified
+      // TODO: Implement feature updates if needed
       
       alert("Property updated successfully!")
       setIsEditing(false)
@@ -219,6 +295,8 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
     } catch (error: any) {
       console.error("Error updating property:", error)
       alert(error.message || "Failed to update property. Please check the console for details.")
+    } finally {
+      setLoading(false)
     }
   }
 

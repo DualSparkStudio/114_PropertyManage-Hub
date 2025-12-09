@@ -74,16 +74,16 @@ export default function AboutPage() {
                   <CardTitle>{about.property_name || "About"}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {about.description && (
+                    <div>
+                      <h3 className="font-semibold mb-2">Description</h3>
+                      <p className="text-muted-foreground">{about.description}</p>
+                    </div>
+                  )}
                   {about.history && (
                     <div>
                       <h3 className="font-semibold mb-2">Our Story</h3>
                       <p className="text-muted-foreground">{about.history}</p>
-                    </div>
-                  )}
-                  {about.mission && (
-                    <div>
-                      <h3 className="font-semibold mb-2">Our Mission</h3>
-                      <p className="text-muted-foreground">{about.mission}</p>
                     </div>
                   )}
                   {about.awards && about.awards.length > 0 && (
@@ -92,16 +92,6 @@ export default function AboutPage() {
                       <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                         {about.awards.map((award, awardIdx) => (
                           <li key={awardIdx}>{award}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {about.values && about.values.length > 0 && (
-                    <div>
-                      <h3 className="font-semibold mb-2">Our Values</h3>
-                      <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                        {about.values.map((value, valueIdx) => (
-                          <li key={valueIdx}>{value}</li>
                         ))}
                       </ul>
                     </div>

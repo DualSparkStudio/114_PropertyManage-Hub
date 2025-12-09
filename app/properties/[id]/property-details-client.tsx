@@ -85,12 +85,17 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                     ...rt,
                     image_urls: roomImages.map(img => img.url),
                   }
-                } catch (error) {
+                } catch (error: any) {
                   // Fallback to single image_url if room_type_images table doesn't exist yet
-                  return {
-                    ...rt,
-                    image_urls: rt.image_url ? [rt.image_url] : [],
+                  // Handle PGRST205 (table not found) and other expected errors silently
+                  if (error?.code === 'PGRST205' || error?.code === 'PGRST116' || error?.message?.includes('schema cache') || error?.message?.includes('does not exist')) {
+                    return {
+                      ...rt,
+                      image_urls: rt.image_url ? [rt.image_url] : [],
+                    }
                   }
+                  // Re-throw unexpected errors
+                  throw error
                 }
               })
             )
@@ -134,8 +139,8 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                 }
               } catch (error: any) {
                 // Fallback to single image_url if room_type_images table doesn't exist yet
-                // Silently handle 404/table not found errors
-                if (error?.status === 404 || error?.code === 'PGRST116' || error?.message?.includes('relation') || error?.message?.includes('does not exist')) {
+                // Silently handle 404/table not found errors (PGRST205 is the code for table not found)
+                if (error?.status === 404 || error?.code === 'PGRST116' || error?.code === 'PGRST205' || error?.message?.includes('relation') || error?.message?.includes('does not exist') || error?.message?.includes('schema cache')) {
                   return {
                     ...rt,
                     image_urls: rt.image_url ? [rt.image_url] : [],
@@ -163,8 +168,12 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           setAmenities(data.amenities || [])
           setFeatures(featuresData)
         }
-      } catch (error) {
-        console.error("Error fetching property:", error)
+      } catch (error: any) {
+        // Only log real errors, not expected table-not-found errors (PGRST205)
+        // PGRST205 means the room_type_images table doesn't exist yet (migration not run)
+        if (error?.code !== 'PGRST205' && !error?.message?.includes('schema cache') && !error?.message?.includes('room_type_images')) {
+          console.error("Error fetching property:", error)
+        }
       } finally {
         setLoading(false)
       }

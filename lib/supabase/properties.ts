@@ -364,9 +364,10 @@ export async function getRoomTypeImages(roomTypeId: string): Promise<Array<{ id:
       .eq('room_type_id', roomTypeId)
       .order('order_index', { ascending: true })
 
-    // If table doesn't exist (404), return empty array
+    // If table doesn't exist (PGRST205 or PGRST116), return empty array silently
     if (error) {
-      if (error.code === 'PGRST116' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
+      if (error.code === 'PGRST116' || error.code === 'PGRST205' || error.message?.includes('relation') || error.message?.includes('does not exist') || error.message?.includes('schema cache')) {
+        // Table doesn't exist yet - this is expected if migration hasn't been run
         return []
       }
       console.error('Error fetching room type images:', error)
@@ -375,10 +376,12 @@ export async function getRoomTypeImages(roomTypeId: string): Promise<Array<{ id:
 
     return data || []
   } catch (error: any) {
-    // Handle 404 or table not found errors gracefully
-    if (error?.code === 'PGRST116' || error?.message?.includes('relation') || error?.message?.includes('does not exist') || (error as any)?.status === 404) {
+    // Handle table not found errors gracefully (don't log as errors, just return empty)
+    if (error?.code === 'PGRST116' || error?.code === 'PGRST205' || error?.message?.includes('relation') || error?.message?.includes('does not exist') || error?.message?.includes('schema cache') || (error as any)?.status === 404) {
+      // Table doesn't exist - return empty array silently
       return []
     }
+    // Only throw if it's a real error
     throw error
   }
 }

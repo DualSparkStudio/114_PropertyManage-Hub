@@ -22,24 +22,86 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { getAllRooms } from "@/lib/supabase/rooms"
-import { getAllProperties } from "@/lib/supabase/properties"
+import { getAllProperties, getAllRoomTypes } from "@/lib/supabase/properties"
 import type { Room } from "@/lib/types/database"
-import type { Property } from "@/lib/types/database"
+import type { Property, RoomType } from "@/lib/types/database"
+
+interface RoomDisplay {
+  id: string
+  room_number: string
+  property_id: string
+  property_name: string
+  room_type_id: string
+  room_type_name: string
+  status: string
+  isFromRoomTypes: boolean
+}
 
 export default function RoomsPage() {
-  const [rooms, setRooms] = useState<(Room & { property_name?: string; room_type_name?: string })[]>([])
+  const [rooms, setRooms] = useState<RoomDisplay[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [roomsData, propertiesData] = await Promise.all([
+        const [roomsData, propertiesData, roomTypesData] = await Promise.all([
           getAllRooms(),
           getAllProperties(),
+          getAllRoomTypes(),
         ])
-        setRooms(roomsData)
         setProperties(propertiesData)
+        
+        // Create a map of property names
+        const propertyMap = new Map(propertiesData.map(p => [p.id, p.name]))
+        
+        // Combine actual rooms from database with rooms generated from room types
+        const actualRooms: RoomDisplay[] = roomsData.map((room: any) => ({
+          id: room.id,
+          room_number: room.room_number,
+          property_id: room.property_id,
+          property_name: room.property_name || propertyMap.get(room.property_id) || 'Unknown',
+          room_type_id: room.room_type_id || '',
+          room_type_name: room.room_type_name || 'N/A',
+          status: room.status || 'available',
+          isFromRoomTypes: false,
+        }))
+        
+        // Generate ALL rooms from room types based on number_of_rooms
+        const generatedRooms: RoomDisplay[] = []
+        roomTypesData.forEach((roomType: RoomType & { property_name?: string; property_id?: string }) => {
+          const numRooms = roomType.number_of_rooms || 1
+          const propertyName = roomType.property_name || propertyMap.get(roomType.property_id || '') || 'Unknown'
+          
+          // Generate all rooms for this room type
+          for (let i = 0; i < numRooms; i++) {
+            generatedRooms.push({
+              id: `generated-${roomType.id}-${i}`,
+              room_number: `${roomType.name} ${i + 1}`,
+              property_id: roomType.property_id || '',
+              property_name: propertyName,
+              room_type_id: roomType.id,
+              room_type_name: roomType.name,
+              status: 'available',
+              isFromRoomTypes: true,
+            })
+          }
+        })
+        
+        // Combine actual rooms and generated rooms (prioritize actual rooms if they exist)
+        const roomMap = new Map<string, RoomDisplay>()
+        
+        // First add all generated rooms from room types
+        generatedRooms.forEach(room => {
+          roomMap.set(`${room.room_type_id}-${room.room_number}`, room)
+        })
+        
+        // Then override with actual individual rooms if they exist
+        actualRooms.forEach(room => {
+          roomMap.set(`${room.room_type_id}-${room.room_number}`, room)
+        })
+        
+        setRooms(Array.from(roomMap.values()))
       } catch (error) {
         console.error("Error fetching rooms:", error)
       } finally {
@@ -118,14 +180,15 @@ export default function RoomsPage() {
                     <TableHead>Property</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Source</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rooms.map((room) => (
                     <TableRow key={room.id}>
                       <TableCell className="font-medium">{room.room_number}</TableCell>
-                      <TableCell>{room.property_name || "Unknown"}</TableCell>
-                      <TableCell>{room.room_type_name || "N/A"}</TableCell>
+                      <TableCell>{room.property_name}</TableCell>
+                      <TableCell>{room.room_type_name}</TableCell>
                       <TableCell>
                         <Badge
                           variant={
@@ -137,6 +200,11 @@ export default function RoomsPage() {
                           }
                         >
                           {room.status.charAt(0).toUpperCase() + room.status.slice(1)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={room.isFromRoomTypes ? "secondary" : "default"}>
+                          {room.isFromRoomTypes ? "From Room Types" : "Individual Room"}
                         </Badge>
                       </TableCell>
                     </TableRow>

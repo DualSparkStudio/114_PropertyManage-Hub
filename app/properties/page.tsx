@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select"
 import { Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { getAllProperties, getPropertyImages } from "@/lib/supabase/properties"
+import { getAllProperties, getPropertyImages, getPropertyRoomTypes } from "@/lib/supabase/properties"
 import { calculateOccupancy } from "@/lib/supabase/bookings"
 import { supabase } from "@/lib/supabase/client"
 
@@ -40,17 +40,25 @@ export default function PropertiesPage() {
       setLocations(uniqueLocations)
       setTypes(uniqueTypes)
 
-      // Fetch images and occupancy for each property
+      // Fetch images, room types, and occupancy for each property
       const propertiesWithDetails = await Promise.all(
         data.map(async (property) => {
-          const images = await getPropertyImages(property.id)
-          const occupancy = await calculateOccupancy(property.id, property.total_rooms || 0)
+          const [images, roomTypes] = await Promise.all([
+            getPropertyImages(property.id),
+            getPropertyRoomTypes(property.id),
+          ])
+          
+          // Calculate actual total rooms from room types
+          const actualTotalRooms = roomTypes.reduce((sum, rt) => sum + (rt.number_of_rooms || 1), 0)
+          const totalRooms = actualTotalRooms || property.total_rooms || 0
+          
+          const occupancy = await calculateOccupancy(property.id, totalRooms)
           return {
             id: property.id,
             name: property.name,
             type: property.type,
             location: property.location,
-            rooms: property.total_rooms || 0,
+            rooms: totalRooms,
             occupancy,
             image: images[0]?.url || '',
             status: property.status || 'active',

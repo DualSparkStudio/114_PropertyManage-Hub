@@ -13,6 +13,7 @@ import { StatsCard } from "@/components/reusable/stats-card"
 import { Bed, DollarSign, TrendingUp, Image as ImageIcon, Edit, Save, X, Power, PowerOff } from "lucide-react"
 import Image from "next/image"
 import { updateProperty, getPropertyById, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType, getRoomTypeImages, upsertRoomTypeImages, updatePropertyStatus } from "@/lib/supabase/properties"
+import { calculateOccupancy, getBookingStats } from "@/lib/supabase/bookings"
 import { supabase } from "@/lib/supabase/client"
 import type { RoomType, Feature } from "@/lib/types/database"
 import {
@@ -48,11 +49,13 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
     price: 0,
     status: "active" as 'active' | 'inactive',
   })
-  const [heroImage, setHeroImage] = useState("https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
+  const [heroImage, setHeroImage] = useState("")
   const [galleryImages, setGalleryImages] = useState<string[]>([])
   const [roomTypes, setRoomTypes] = useState<(RoomType & { image_urls?: string[] })[]>([])
   const [amenities, setAmenities] = useState<string[]>([])
   const [features, setFeatures] = useState<Feature[]>([])
+  const [occupancy, setOccupancy] = useState<number>(0)
+  const [monthlyRevenue, setMonthlyRevenue] = useState<number>(0)
 
   useEffect(() => {
     async function fetchProperty() {
@@ -109,11 +112,33 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           price: property.price,
           status: (property.status as 'active' | 'inactive') || 'active',
         })
-        setHeroImage(images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
+        setHeroImage(images[0]?.url || "")
         setGalleryImages(images.map(img => img.url))
         setRoomTypes(roomTypesWithImages)
         setAmenities(property.amenities || [])
         setFeatures(featuresData)
+        
+        // Calculate occupancy and revenue
+        const totalRooms = actualTotalRooms || property.total_rooms || 0
+        const occupancyRate = await calculateOccupancy(property.id, totalRooms)
+        
+        // Calculate monthly revenue (current month)
+        const now = new Date()
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+        const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+        
+        const { data: monthlyBookings } = await supabase
+          .from('bookings')
+          .select('amount')
+          .eq('property_id', property.id)
+          .eq('status', 'confirmed')
+          .gte('check_in', firstDayOfMonth)
+          .lte('check_in', lastDayOfMonth)
+        
+        const revenue = monthlyBookings?.reduce((sum, b) => sum + Number(b.amount || 0), 0) || 0
+        
+        setOccupancy(occupancyRate)
+        setMonthlyRevenue(revenue)
       } catch (error: any) {
         // Only log real errors, not expected table-not-found errors (PGRST205)
         // PGRST205 means the room_type_images table doesn't exist yet (migration not run)
@@ -390,17 +415,17 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           />
           <StatsCard
             title="Occupancy Rate"
-            value="92%"
+            value={`${occupancy}%`}
             icon={TrendingUp}
-            change="+5% from last month"
-            trend="up"
+            change={`${actualTotalRooms || propertyData.totalRooms} total rooms`}
+            trend={occupancy > 0 ? "up" : "down"}
           />
           <StatsCard
             title="Monthly Revenue"
-            value="$45,200"
+            value={`$${monthlyRevenue.toLocaleString()}`}
             icon={DollarSign}
-            change="+12% from last month"
-            trend="up"
+            change="Current month"
+            trend={monthlyRevenue > 0 ? "up" : "down"}
           />
         </div>
 

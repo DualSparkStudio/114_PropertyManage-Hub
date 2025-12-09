@@ -159,7 +159,7 @@ export function PropertyCard({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Property</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{name}"? This action cannot be undone and will delete all associated data including bookings, rooms, and images.
+              Are you sure you want to delete &quot;{name}&quot;? This action cannot be undone and will delete all associated data including bookings, rooms, and images.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

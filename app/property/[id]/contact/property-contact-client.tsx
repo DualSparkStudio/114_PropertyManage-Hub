@@ -1,21 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Phone, Mail, MapPin, Calendar } from "lucide-react"
-import { propertyData } from "@/lib/data/property-data"
+import { getPropertyBySlug, getPropertyContact } from "@/lib/supabase/properties"
+import { supabase } from "@/lib/supabase/client"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import type { Property, PropertyContact } from "@/lib/types/database"
 
 interface PropertyContactClientProps {
   propertySlug: string
 }
 
 export function PropertyContactClient({ propertySlug }: PropertyContactClientProps) {
-  const property = propertyData[propertySlug] || propertyData["grand-hotel"]
+  const [property, setProperty] = useState<Property | null>(null)
+  const [contact, setContact] = useState<PropertyContact | null>(null)
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -23,10 +27,77 @@ export function PropertyContactClient({ propertySlug }: PropertyContactClientPro
     message: "",
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const prop = await getPropertyBySlug(propertySlug)
+        if (prop) {
+          setProperty(prop)
+          const contactData = await getPropertyContact(prop.id)
+          setContact(contactData)
+        }
+      } catch (error) {
+        console.error("Error fetching property contact:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [propertySlug])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    alert("Thank you for your message! We'll get back to you soon.")
-    setFormData({ name: "", email: "", phone: "", message: "" })
+    if (!property) return
+
+    try {
+      // Save contact message to database
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert({
+          property_id: property.id,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+          message: formData.message,
+          status: 'new',
+        })
+
+      if (error) throw error
+
+      alert("Thank you for your message! We'll get back to you soon.")
+      setFormData({ name: "", email: "", phone: "", message: "" })
+    } catch (error) {
+      console.error("Error submitting contact form:", error)
+      alert("Failed to send message. Please try again.")
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar variant="property" propertySlug={propertySlug} />
+        <div className="container mx-auto px-6 py-12">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (!property) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar variant="property" propertySlug={propertySlug} />
+        <div className="container mx-auto px-6 py-12">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Property not found</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   return (
@@ -93,34 +164,45 @@ export function PropertyContactClient({ propertySlug }: PropertyContactClientPro
               <CardTitle>Contact Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center gap-4">
-                <Phone className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Phone</p>
-                  <p className="font-medium">{property.contact?.phone}</p>
+              {contact?.phone && (
+                <div className="flex items-center gap-4">
+                  <Phone className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <p className="font-medium">{contact.phone}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <Mail className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{property.contact?.email}</p>
+              )}
+              {contact?.email && (
+                <div className="flex items-center gap-4">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-medium">{contact.email}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <MapPin className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Address</p>
-                  <p className="font-medium">{property.contact?.address}</p>
+              )}
+              {contact?.address && (
+                <div className="flex items-center gap-4">
+                  <MapPin className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Address</p>
+                    <p className="font-medium">{contact.address}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <Calendar className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Hours</p>
-                  <p className="font-medium">{property.contact?.hours}</p>
+              )}
+              {contact?.hours && (
+                <div className="flex items-center gap-4">
+                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Hours</p>
+                    <p className="font-medium">{contact.hours}</p>
+                  </div>
                 </div>
-              </div>
+              )}
+              {!contact && (
+                <p className="text-sm text-muted-foreground">Contact information not available.</p>
+              )}
             </CardContent>
           </Card>
         </div>

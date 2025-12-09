@@ -354,6 +354,80 @@ export async function deleteRoomType(roomTypeId: string): Promise<void> {
 }
 
 /**
+ * Get all room types across all properties
+ */
+export async function getAllRoomTypes(): Promise<(RoomType & { property_name?: string; property_slug?: string; property_location?: string })[]> {
+  const { data, error } = await supabase
+    .from('room_types')
+    .select(`
+      *,
+      properties!inner(name, slug, location)
+    `)
+    .order('price', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching all room types:', error)
+    throw error
+  }
+
+  return (data || []).map((rt: any) => ({
+    ...rt,
+    property_name: rt.properties?.name,
+    property_slug: rt.properties?.slug,
+    property_location: rt.properties?.location,
+  }))
+}
+
+/**
+ * Get all features across all properties
+ */
+export async function getAllFeatures(): Promise<(Feature & { property_name?: string; property_slug?: string })[]> {
+  const { data, error } = await supabase
+    .from('features')
+    .select(`
+      *,
+      properties!inner(name, slug)
+    `)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching all features:', error)
+    throw error
+  }
+
+  return (data || []).map((feat: any) => ({
+    ...feat,
+    property_name: feat.properties?.name,
+    property_slug: feat.properties?.slug,
+  }))
+}
+
+/**
+ * Get all attractions across all properties
+ */
+export async function getAllAttractions(): Promise<(Attraction & { property_name?: string; property_slug?: string; property_location?: string })[]> {
+  const { data, error } = await supabase
+    .from('attractions')
+    .select(`
+      *,
+      properties!inner(name, slug, location)
+    `)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching all attractions:', error)
+    throw error
+  }
+
+  return (data || []).map((attr: any) => ({
+    ...attr,
+    property_name: attr.properties?.name,
+    property_slug: attr.properties?.slug,
+    property_location: attr.properties?.location,
+  }))
+}
+
+/**
  * Get images for a room type
  */
 export async function getRoomTypeImages(roomTypeId: string): Promise<Array<{ id: string; url: string; alt_text: string | null; order_index: number }>> {

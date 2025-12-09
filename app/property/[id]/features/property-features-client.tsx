@@ -1,16 +1,66 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { propertyData } from "@/lib/data/property-data"
+import { getPropertyBySlug, getPropertyFeatures } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import type { Property, Feature } from "@/lib/types/database"
 
 interface PropertyFeaturesClientProps {
   propertySlug: string
 }
 
 export function PropertyFeaturesClient({ propertySlug }: PropertyFeaturesClientProps) {
-  const property = propertyData[propertySlug] || propertyData["grand-hotel"]
+  const [property, setProperty] = useState<Property | null>(null)
+  const [features, setFeatures] = useState<Feature[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const prop = await getPropertyBySlug(propertySlug)
+        if (prop) {
+          setProperty(prop)
+          const feats = await getPropertyFeatures(prop.id)
+          setFeatures(feats)
+        }
+      } catch (error) {
+        console.error("Error fetching property features:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [propertySlug])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar variant="property" propertySlug={propertySlug} />
+        <div className="container mx-auto px-6 py-12">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading features...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (!property) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar variant="property" propertySlug={propertySlug} />
+        <div className="container mx-auto px-6 py-12">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Property not found</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -22,17 +72,23 @@ export function PropertyFeaturesClient({ propertySlug }: PropertyFeaturesClientP
           <p className="text-muted-foreground">Everything you need for a perfect stay</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {property.features?.map((feature: any, idx: number) => (
-            <Card key={idx}>
-              <CardContent className="p-6">
-                <div className="text-5xl mb-4">{feature.icon}</div>
-                <h3 className="text-lg font-semibold mb-2">{feature.name}</h3>
-                <p className="text-sm text-muted-foreground">{feature.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {features.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No features listed for this property.</p>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {features.map((feature) => (
+              <Card key={feature.id}>
+                <CardContent className="p-6">
+                  {feature.icon && <div className="text-5xl mb-4">{feature.icon}</div>}
+                  <h3 className="text-lg font-semibold mb-2">{feature.name}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.description || "No description available."}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       <Footer />

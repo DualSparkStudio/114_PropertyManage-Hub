@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
 import { PageHeader } from "@/components/reusable/page-header"
 import { Card, CardContent } from "@/components/ui/card"
@@ -32,35 +33,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
-const staff = [
-  {
-    id: "1",
-    name: "John Manager",
-    email: "john@example.com",
-    role: "Manager",
-    property: "Grand Hotel",
-    status: "Active",
-  },
-  {
-    id: "2",
-    name: "Jane Receptionist",
-    email: "jane@example.com",
-    role: "Receptionist",
-    property: "Beach Resort",
-    status: "Active",
-  },
-  {
-    id: "3",
-    name: "Mike Staff",
-    email: "mike@example.com",
-    role: "Receptionist",
-    property: "Mountain Villa",
-    status: "Active",
-  },
-]
+import { getAllStaff } from "@/lib/supabase/staff"
+import { getAllProperties } from "@/lib/supabase/properties"
+import type { Staff } from "@/lib/types/database"
+import type { Property } from "@/lib/types/database"
 
 export default function StaffPage() {
+  const [staff, setStaff] = useState<(Staff & { property_name?: string })[]>([])
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [staffData, propertiesData] = await Promise.all([
+          getAllStaff(),
+          getAllProperties(),
+        ])
+        setStaff(staffData)
+        setProperties(propertiesData)
+      } catch (error) {
+        console.error("Error fetching staff:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -88,34 +87,50 @@ export default function StaffPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {staff.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.name}`} />
-                          <AvatarFallback>
-                            {member.name.split(" ").map((n) => n[0]).join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{member.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{member.email}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{member.role}</Badge>
-                    </TableCell>
-                    <TableCell>{member.property}</TableCell>
-                    <TableCell>
-                      <Badge variant="success">{member.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">
-                        Edit
-                      </Button>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-12">
+                      <p className="text-muted-foreground">Loading staff...</p>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : staff.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-12">
+                      <p className="text-muted-foreground">No staff members found.</p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  staff.map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.name}`} />
+                            <AvatarFallback>
+                              {member.name.split(" ").map((n) => n[0]).join("")}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{member.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{member.email || "N/A"}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{member.role}</Badge>
+                      </TableCell>
+                      <TableCell>{member.property_name || "Unknown"}</TableCell>
+                      <TableCell>
+                        <Badge variant={member.status === "active" ? "success" : "secondary"}>
+                          {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm">
+                          Edit
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -164,9 +179,11 @@ export default function StaffPage() {
                     <SelectValue placeholder="Select property" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Grand Hotel</SelectItem>
-                    <SelectItem value="2">Beach Resort</SelectItem>
-                    <SelectItem value="3">Mountain Villa</SelectItem>
+                    {properties.map((prop) => (
+                      <SelectItem key={prop.id} value={prop.id}>
+                        {prop.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

@@ -9,21 +9,48 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { propertyData } from "../property/[id]/property-data"
+import { getPropertyBySlug, getPropertyImages } from "@/lib/supabase/properties"
+import { useState, useEffect } from "react"
+import type { Property } from "@/lib/types/database"
 
 function CheckoutContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const propertySlug = searchParams.get("property") || "grand-hotel"
+  const propertySlug = searchParams.get("property") || ""
   const checkIn = searchParams.get("checkIn") || ""
   const checkOut = searchParams.get("checkOut") || ""
   const guests = Number(searchParams.get("guests")) || 2
 
-  const property = propertyData[propertySlug] || propertyData["grand-hotel"]
-  const nights = checkIn && checkOut
+  const [property, setProperty] = useState<Property | null>(null)
+  const [image, setImage] = useState<string>("")
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchProperty() {
+      if (!propertySlug) {
+        setLoading(false)
+        return
+      }
+      try {
+        const prop = await getPropertyBySlug(propertySlug)
+        if (prop) {
+          setProperty(prop)
+          const images = await getPropertyImages(prop.id)
+          setImage(images[0]?.url || "")
+        }
+      } catch (error) {
+        console.error("Error fetching property:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProperty()
+  }, [propertySlug])
+
+  const nights = checkIn && checkOut && property
     ? Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24))
     : 0
-  const subtotal = nights * property.price
+  const subtotal = property ? nights * Number(property.price) : 0
   const serviceFee = Math.round(subtotal * 0.1)
   const total = subtotal + serviceFee
 
@@ -39,6 +66,47 @@ function CheckoutContent() {
     e.preventDefault()
     // In a real app, you'd send this to your backend
     router.push(`/confirmation?bookingId=${Date.now()}`)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-50 border-b bg-white">
+          <div className="container mx-auto px-6 py-4">
+            <Link href="/explore" className="text-2xl font-bold text-primary">
+              PropertyManage
+            </Link>
+          </div>
+        </header>
+        <div className="container mx-auto px-6 py-8">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!property) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-50 border-b bg-white">
+          <div className="container mx-auto px-6 py-4">
+            <Link href="/explore" className="text-2xl font-bold text-primary">
+              PropertyManage
+            </Link>
+          </div>
+        </header>
+        <div className="container mx-auto px-6 py-8">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Property not found</p>
+            <Link href="/explore" className="text-primary hover:underline mt-4 inline-block">
+              Browse Properties
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -130,14 +198,16 @@ function CheckoutContent() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex gap-4">
-                    <div className="relative h-20 w-20 rounded-lg overflow-hidden">
-                      <Image
-                        src={property.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800"}
-                        alt={property.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
+                    {image && (
+                      <div className="relative h-20 w-20 rounded-lg overflow-hidden">
+                        <Image
+                          src={image}
+                          alt={property.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
                     <div className="flex-1">
                       <h3 className="font-semibold">{property.name}</h3>
                       <p className="text-sm text-muted-foreground">{property.location}</p>

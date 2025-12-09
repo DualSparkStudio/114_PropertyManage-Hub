@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
 import { PageHeader } from "@/components/reusable/page-header"
 import { Card, CardContent } from "@/components/ui/card"
@@ -23,61 +24,34 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Eye } from "lucide-react"
 import { BookingDetailDrawer } from "@/components/reusable/booking-detail-drawer"
-
-const bookings = [
-  {
-    id: "1",
-    guest: "John Doe",
-    property: "Grand Hotel",
-    checkIn: "2024-01-15",
-    checkOut: "2024-01-18",
-    source: "Website",
-    status: "Confirmed",
-    amount: "$450",
-  },
-  {
-    id: "2",
-    guest: "Jane Smith",
-    property: "Beach Resort",
-    checkIn: "2024-01-16",
-    checkOut: "2024-01-20",
-    source: "Airbnb",
-    status: "Pending",
-    amount: "$600",
-  },
-  {
-    id: "3",
-    guest: "Mike Johnson",
-    property: "Mountain Villa",
-    checkIn: "2024-01-17",
-    checkOut: "2024-01-19",
-    source: "Booking.com",
-    status: "Confirmed",
-    amount: "$380",
-  },
-  {
-    id: "4",
-    guest: "Sarah Williams",
-    property: "City Hotel",
-    checkIn: "2024-01-18",
-    checkOut: "2024-01-22",
-    source: "Manual",
-    status: "Cancelled",
-    amount: "$720",
-  },
-  {
-    id: "5",
-    guest: "David Brown",
-    property: "Lakeside Resort",
-    checkIn: "2024-01-19",
-    checkOut: "2024-01-21",
-    source: "Website",
-    status: "Confirmed",
-    amount: "$400",
-  },
-]
+import { getBookingsWithDetails } from "@/lib/supabase/bookings"
+import { getAllProperties } from "@/lib/supabase/properties"
+import type { BookingWithDetails } from "@/lib/types/database"
+import type { Property } from "@/lib/types/database"
 
 export default function BookingsPage() {
+  const [bookings, setBookings] = useState<BookingWithDetails[]>([])
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedBooking, setSelectedBooking] = useState<BookingWithDetails | null>(null)
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [bookingsData, propertiesData] = await Promise.all([
+          getBookingsWithDetails(),
+          getAllProperties(),
+        ])
+        setBookings(bookingsData)
+        setProperties(propertiesData)
+      } catch (error) {
+        console.error("Error fetching bookings:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -111,9 +85,11 @@ export default function BookingsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Properties</SelectItem>
-                <SelectItem value="1">Grand Hotel</SelectItem>
-                <SelectItem value="2">Beach Resort</SelectItem>
-                <SelectItem value="3">Mountain Villa</SelectItem>
+                {properties.map((prop) => (
+                  <SelectItem key={prop.id} value={prop.id}>
+                    {prop.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select>
@@ -134,54 +110,69 @@ export default function BookingsPage() {
         {/* Bookings Table */}
         <Card>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Guest</TableHead>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Check-in</TableHead>
-                  <TableHead>Check-out</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bookings.map((booking) => (
-                  <TableRow key={booking.id}>
-                    <TableCell className="font-medium">
-                      {booking.guest}
-                    </TableCell>
-                    <TableCell>{booking.property}</TableCell>
-                    <TableCell>{booking.checkIn}</TableCell>
-                    <TableCell>{booking.checkOut}</TableCell>
-                    <TableCell>{booking.source}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          booking.status === "Confirmed"
-                            ? "success"
-                            : booking.status === "Pending"
-                            ? "warning"
-                            : "destructive"
-                        }
-                      >
-                        {booking.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{booking.amount}</TableCell>
-                    <TableCell>
-                      <BookingDetailDrawer booking={booking}>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </BookingDetailDrawer>
-                    </TableCell>
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Loading bookings...</p>
+              </div>
+            ) : bookings.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No bookings found.</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Guest</TableHead>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Check-in</TableHead>
+                    <TableHead>Check-out</TableHead>
+                    <TableHead>Source</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {bookings.map((booking) => {
+                    const property = booking.property as any
+                    return (
+                      <TableRow key={booking.id}>
+                        <TableCell className="font-medium">
+                          {booking.guest_name}
+                        </TableCell>
+                        <TableCell>{property?.name || "Unknown"}</TableCell>
+                        <TableCell>{new Date(booking.check_in).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(booking.check_out).toLocaleDateString()}</TableCell>
+                        <TableCell className="capitalize">{booking.source}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              booking.status === "confirmed"
+                                ? "success"
+                                : booking.status === "pending"
+                                ? "warning"
+                                : booking.status === "cancelled"
+                                ? "destructive"
+                                : "secondary"
+                            }
+                          >
+                            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>₹{booking.amount}</TableCell>
+                        <TableCell>
+                          <BookingDetailDrawer booking={booking as any}>
+                            <Button variant="ghost" size="sm" onClick={() => setSelectedBooking(booking)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </BookingDetailDrawer>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

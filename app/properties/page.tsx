@@ -15,42 +15,72 @@ import {
 } from "@/components/ui/select"
 import { Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { OptimizedLink } from "@/components/optimized-link"
 import { getAllProperties, getPropertyImages } from "@/lib/supabase/properties"
+import { calculateOccupancy } from "@/lib/supabase/bookings"
+import { supabase } from "@/lib/supabase/client"
 
 export default function PropertiesPage() {
   const router = useRouter()
   const [properties, setProperties] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedLocation, setSelectedLocation] = useState<string>("all")
+  const [selectedType, setSelectedType] = useState<string>("all")
+  const [selectedStatus, setSelectedStatus] = useState<string>("all")
+  const [locations, setLocations] = useState<string[]>([])
+  const [types, setTypes] = useState<string[]>([])
+
+  const fetchProperties = async () => {
+    try {
+      const data = await getAllProperties()
+      
+      // Get unique locations and types from database
+      const uniqueLocations = [...new Set(data.map(p => p.location))].sort()
+      const uniqueTypes = [...new Set(data.map(p => p.type))].sort()
+      setLocations(uniqueLocations)
+      setTypes(uniqueTypes)
+
+      // Fetch images and occupancy for each property
+      const propertiesWithDetails = await Promise.all(
+        data.map(async (property) => {
+          const images = await getPropertyImages(property.id)
+          const occupancy = await calculateOccupancy(property.id, property.total_rooms || 0)
+          return {
+            id: property.id,
+            name: property.name,
+            type: property.type,
+            location: property.location,
+            rooms: property.total_rooms || 0,
+            occupancy,
+            image: images[0]?.url || '',
+            status: property.status || 'active',
+          }
+        })
+      )
+      setProperties(propertiesWithDetails)
+    } catch (error) {
+      console.error("Error fetching properties:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    async function fetchProperties() {
-      try {
-        const data = await getAllProperties()
-        // Fetch images for each property
-        const propertiesWithImages = await Promise.all(
-          data.map(async (property) => {
-            const images = await getPropertyImages(property.id)
-            return {
-              id: property.id,
-              name: property.name,
-              type: property.type,
-              location: property.location,
-              rooms: property.total_rooms,
-              occupancy: 0, // Calculate from bookings if needed
-              image: images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
-            }
-          })
-        )
-        setProperties(propertiesWithImages)
-      } catch (error) {
-        console.error("Error fetching properties:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
     fetchProperties()
   }, [])
+
+  // Filter properties based on search and filters
+  const filteredProperties = properties.filter((property) => {
+    const matchesSearch = !searchQuery || 
+      property.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      property.location.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    const matchesLocation = selectedLocation === "all" || property.location === selectedLocation
+    const matchesType = selectedType === "all" || property.type === selectedType
+    const matchesStatus = selectedStatus === "all" || property.status === selectedStatus
+
+    return matchesSearch && matchesLocation && matchesType && matchesStatus
+  })
   
   return (
     <MainLayout>
@@ -69,31 +99,43 @@ export default function PropertiesPage() {
         <Card className="p-4">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex-1 min-w-[200px]">
-              <Input placeholder="Search properties..." />
+              <Input 
+                placeholder="Search properties..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <Select>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Location" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                <SelectItem value="ny">New York</SelectItem>
-                <SelectItem value="miami">Miami</SelectItem>
-                <SelectItem value="sf">San Francisco</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="hotel">Hotel</SelectItem>
-                <SelectItem value="resort">Resort</SelectItem>
-                <SelectItem value="villa">Villa</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
+            {locations.length > 0 && (
+              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {locations.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {types.length > 0 && (
+              <Select value={selectedType} onValueChange={setSelectedType}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {types.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -111,14 +153,18 @@ export default function PropertiesPage() {
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading properties...</p>
           </div>
-        ) : properties.length === 0 ? (
+        ) : filteredProperties.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No properties found. Add your first property to get started!</p>
+            <p className="text-muted-foreground">
+              {searchQuery || selectedLocation !== "all" || selectedType !== "all" || selectedStatus !== "all"
+                ? "No properties found matching your filters."
+                : "No properties found. Add your first property to get started!"}
+            </p>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {properties.map((property) => (
-              <PropertyCard key={property.id} {...property} />
+            {filteredProperties.map((property) => (
+              <PropertyCard key={property.id} {...property} onUpdate={fetchProperties} />
             ))}
           </div>
         )}

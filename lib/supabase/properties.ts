@@ -303,6 +303,21 @@ export async function updateProperty(id: string, updates: Partial<Property>): Pr
 }
 
 /**
+ * Update property status (activate/inactivate)
+ */
+export async function updatePropertyStatus(id: string, status: 'active' | 'inactive'): Promise<void> {
+  const { error } = await supabase
+    .from('properties')
+    .update({ status })
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error updating property status:', error)
+    throw error
+  }
+}
+
+/**
  * Delete a property (admin only)
  */
 export async function deleteProperty(id: string): Promise<void> {

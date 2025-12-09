@@ -12,6 +12,7 @@ export interface Property {
   amenities: string[]
   total_rooms: number
   type: string
+  status: 'active' | 'inactive'
   created_at: string
   updated_at: string
 }

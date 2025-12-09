@@ -172,6 +172,32 @@ export async function deleteBooking(id: string): Promise<void> {
 }
 
 /**
+ * Calculate occupancy percentage for a property
+ */
+export async function calculateOccupancy(propertyId: string, totalRooms: number): Promise<number> {
+  if (totalRooms === 0) return 0
+  
+  const today = new Date().toISOString().split('T')[0]
+  
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('property_id', propertyId)
+    .eq('status', 'confirmed')
+    .lte('check_in', today)
+    .gte('check_out', today)
+
+  if (error) {
+    console.error('Error calculating occupancy:', error)
+    return 0
+  }
+
+  const activeBookings = data?.length || 0
+  const occupancy = Math.min(Math.round((activeBookings / totalRooms) * 100), 100)
+  return occupancy
+}
+
+/**
  * Get booking statistics
  */
 export async function getBookingStats(propertyId?: string) {

@@ -140,7 +140,9 @@ export function PropertyRoomsClient({ propertyId }: PropertyRoomsClientProps) {
                           <span className="text-sm text-muted-foreground">/night</span>
                         </div>
                         <Button asChild>
-                          <Link href={`/property/${propertyId}`}>Book Now</Link>
+                          <Link href={`/checkout?property=${propertyId}&roomType=${room.id}&roomName=${encodeURIComponent(room.name)}&roomPrice=${room.price}`}>
+                            Book Now
+                          </Link>
                         </Button>
                       </div>
                     </div>

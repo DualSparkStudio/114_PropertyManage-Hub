@@ -24,17 +24,23 @@ import { getAllProperties, getPropertyImages } from "@/lib/supabase/properties"
 const PropertyCard = memo(function PropertyCard({ property }: { property: any }) {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="relative h-48 w-full">
-        <Image
-          src={property.image}
-          alt={property.name}
-          fill
-          className="object-cover"
-          loading="lazy"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          placeholder="blur"
-          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-        />
+      <div className="relative h-48 w-full bg-muted">
+        {property.image ? (
+          <Image
+            src={property.image}
+            alt={property.name}
+            fill
+            className="object-cover"
+            loading="lazy"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            placeholder="blur"
+            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            <Bed className="h-12 w-12" />
+          </div>
+        )}
         <div className="absolute top-4 right-4">
           <Badge variant="secondary" className="bg-white/90">
             {property.type}
@@ -101,7 +107,7 @@ export default function ExplorePage() {
         setAllLocations(locations)
         setAllTypes(types)
         
-        // Fetch images for each property and filter out properties without images
+        // Fetch images for each property - show all properties even without images or rooms
         const propertiesWithImages = await Promise.all(
           data.map(async (property) => {
             const images = await getPropertyImages(property.id)
@@ -118,8 +124,8 @@ export default function ExplorePage() {
             }
           })
         )
-        // Only show properties that have images
-        setProperties(propertiesWithImages.filter(p => p.image))
+        // Show all properties regardless of images or room count
+        setProperties(propertiesWithImages)
       } catch (error) {
         console.error("Error fetching properties:", error)
       } finally {

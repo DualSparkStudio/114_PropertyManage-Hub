@@ -10,10 +10,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Bed, Users, Wifi, Car, Star, Home, Mountain, Sparkles, Info, Phone, Share2 } from "lucide-react"
-import { getPropertyById, getPropertyImages } from "@/lib/supabase/properties"
+import { getPropertyById, getPropertyImages, getPropertyRoomTypes } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
-import type { Property } from "@/lib/types/database"
+import type { Property, RoomType } from "@/lib/types/database"
 
 interface PropertyHomeClientProps {
   propertyId: string
@@ -23,6 +23,7 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
   const router = useRouter()
   const [property, setProperty] = useState<Property | null>(null)
   const [images, setImages] = useState<string[]>([])
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
   const [loading, setLoading] = useState(true)
   const [checkIn, setCheckIn] = useState("")
   const [checkOut, setCheckOut] = useState("")
@@ -37,6 +38,8 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
             setProperty(prop)
             const propertyImages = await getPropertyImages(prop.id)
             setImages(propertyImages.map(img => img.url))
+            const rooms = await getPropertyRoomTypes(prop.id)
+            setRoomTypes(rooms)
           }
         }
       } catch (error) {
@@ -47,6 +50,12 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
     }
     fetchProperty()
   }, [propertyId])
+
+  // Calculate total rooms and max guests from room types
+  const totalRooms = roomTypes.reduce((sum, rt) => sum + (rt.number_of_rooms || 0), 0)
+  const maxGuests = roomTypes.length > 0 
+    ? Math.max(...roomTypes.map(rt => rt.max_guests || 0))
+    : 0
 
   const handleBookNow = () => {
     if (!checkIn || !checkOut) {
@@ -174,13 +183,13 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
                   <div className="flex items-center gap-2">
                     <Bed className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="text-sm font-medium">{property.total_rooms || 0} Rooms</p>
+                      <p className="text-sm font-medium">{totalRooms} Rooms</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="text-sm font-medium">Up to {guests} guests</p>
+                      <p className="text-sm font-medium">Up to {maxGuests || guests} guests</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

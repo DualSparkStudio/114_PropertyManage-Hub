@@ -19,6 +19,9 @@ function CheckoutContent() {
   const checkIn = searchParams.get("checkIn") || ""
   const checkOut = searchParams.get("checkOut") || ""
   const guests = Number(searchParams.get("guests")) || 2
+  const roomTypeId = searchParams.get("roomType") || ""
+  const roomName = searchParams.get("roomName") || ""
+  const roomPrice = searchParams.get("roomPrice") || ""
 
   const [property, setProperty] = useState<Property | null>(null)
   const [image, setImage] = useState<string>("")
@@ -49,7 +52,9 @@ function CheckoutContent() {
   const nights = checkIn && checkOut && property
     ? Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24))
     : 0
-  const subtotal = property ? nights * Number(property.price) : 0
+  // Use room price if available, otherwise use property price
+  const basePrice = roomPrice ? Number(roomPrice) : (property ? Number(property.price) : 0)
+  const subtotal = nights * basePrice
   const serviceFee = Math.round(subtotal * 0.1)
   const total = subtotal + serviceFee
 
@@ -232,9 +237,16 @@ function CheckoutContent() {
                     </div>
                   </div>
                   <Separator />
+                  {roomName && (
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Room: </span>
+                      <span className="font-medium">{decodeURIComponent(roomName)}</span>
+                    </div>
+                  )}
+                  <Separator />
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span>₹{property.price} x {nights} nights</span>
+                      <span>₹{basePrice} x {nights} nights</span>
                       <span>₹{subtotal}</span>
                     </div>
                     <div className="flex justify-between">

@@ -99,7 +99,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           })
         )
         
-        // Calculate actual total rooms from room types
+        // Calculate actual total rooms from room types (ONLY from room types, no static fallback)
         const actualTotalRooms = roomTypesWithImages.reduce((sum, rt) => sum + (rt.number_of_rooms || 1), 0)
         
         setPropertyData({
@@ -108,7 +108,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           location: property.location,
           type: property.type,
           description: property.description || "",
-          totalRooms: actualTotalRooms || property.total_rooms || 0,
+          totalRooms: actualTotalRooms,
           price: property.price,
           status: (property.status as 'active' | 'inactive') || 'active',
         })
@@ -118,9 +118,8 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         setAmenities(property.amenities || [])
         setFeatures(featuresData)
         
-        // Calculate occupancy and revenue
-        const totalRooms = actualTotalRooms || property.total_rooms || 0
-        const occupancyRate = await calculateOccupancy(property.id, totalRooms)
+        // Calculate occupancy and revenue (using only calculated rooms from room types)
+        const occupancyRate = await calculateOccupancy(property.id, actualTotalRooms)
         
         // Calculate monthly revenue (current month)
         const now = new Date()
@@ -408,16 +407,16 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         <div className="grid gap-4 md:grid-cols-3">
           <StatsCard
             title="Total Rooms"
-            value={actualTotalRooms || propertyData.totalRooms}
+            value={actualTotalRooms}
             icon={Bed}
-            change={`${actualTotalRooms || propertyData.totalRooms} total`}
+            change={`${actualTotalRooms} total`}
             trend="up"
           />
           <StatsCard
             title="Occupancy Rate"
             value={`${occupancy}%`}
             icon={TrendingUp}
-            change={`${actualTotalRooms || propertyData.totalRooms} total rooms`}
+            change={`${actualTotalRooms} total rooms`}
             trend={occupancy > 0 ? "up" : "down"}
           />
           <StatsCard
@@ -502,7 +501,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                         className="mt-1"
                       />
                     ) : (
-                      <p className="mt-1 font-medium">{actualTotalRooms || propertyData.totalRooms}</p>
+                      <p className="mt-1 font-medium">{actualTotalRooms}</p>
                     )}
                   </div>
                   <div>

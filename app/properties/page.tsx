@@ -48,17 +48,16 @@ export default function PropertiesPage() {
             getPropertyRoomTypes(property.id),
           ])
           
-          // Calculate actual total rooms from room types
+          // Calculate actual total rooms from room types (ONLY from room types, no static fallback)
           const actualTotalRooms = roomTypes.reduce((sum, rt) => sum + (rt.number_of_rooms || 1), 0)
-          const totalRooms = actualTotalRooms || property.total_rooms || 0
           
-          const occupancy = await calculateOccupancy(property.id, totalRooms)
+          const occupancy = await calculateOccupancy(property.id, actualTotalRooms)
           return {
             id: property.id,
             name: property.name,
             type: property.type,
             location: property.location,
-            rooms: totalRooms,
+            rooms: actualTotalRooms,
             occupancy,
             image: images[0]?.url || '',
             status: property.status || 'active',

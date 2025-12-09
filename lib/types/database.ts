@@ -35,6 +35,7 @@ export interface RoomType {
   image_url: string | null
   max_guests: number
   additional_price_per_extra_guest: number
+  number_of_rooms: number
   description: string | null
   amenities: string[] | null
   created_at: string

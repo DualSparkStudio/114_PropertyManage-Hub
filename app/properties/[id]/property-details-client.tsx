@@ -644,6 +644,19 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                               placeholder="0.00"
                             />
                           </div>
+                          <div>
+                            <Label>Number of Rooms</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={roomType.number_of_rooms || 1}
+                              onChange={(e) => {
+                                const updated = [...roomTypes]
+                                updated[idx].number_of_rooms = parseInt(e.target.value) || 1
+                                setRoomTypes(updated)
+                              }}
+                            />
+                          </div>
                         </div>
                         <div>
                           <Label>Description</Label>
@@ -673,6 +686,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                           image_urls: [],
                           max_guests: 2,
                           additional_price_per_extra_guest: 0,
+                          number_of_rooms: 1,
                           description: null,
                           amenities: null,
                           created_at: new Date().toISOString(),
@@ -713,7 +727,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                           ) : null}
                           <div className="flex-1">
                             <h4 className="font-semibold">{roomType.name}</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-2 text-sm">
+                            <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mt-2 text-sm">
                               <div>
                                 <span className="text-muted-foreground">Price: </span>
                                 <span className="font-medium">${roomType.price}</span>
@@ -733,6 +747,10 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                               <div>
                                 <span className="text-muted-foreground">Extra Guest: </span>
                                 <span className="font-medium">${roomType.additional_price_per_extra_guest || 0}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Rooms: </span>
+                                <span className="font-medium">{roomType.number_of_rooms || 1}</span>
                               </div>
                             </div>
                             {roomType.description && (

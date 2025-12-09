@@ -376,7 +376,7 @@ export async function getRoomTypeImages(roomTypeId: string): Promise<Array<{ id:
     return data || []
   } catch (error: any) {
     // Handle 404 or table not found errors gracefully
-    if (error?.code === 'PGRST116' || error?.message?.includes('relation') || error?.message?.includes('does not exist') || error?.status === 404) {
+    if (error?.code === 'PGRST116' || error?.message?.includes('relation') || error?.message?.includes('does not exist') || (error as any)?.status === 404) {
       return []
     }
     throw error
@@ -395,7 +395,7 @@ export async function upsertRoomTypeImages(roomTypeId: string, imageUrls: string
       .eq('room_type_id', roomTypeId)
 
     // If table doesn't exist, skip (table might not be created yet)
-    if (deleteError && deleteError.code !== 'PGRST116' && !deleteError.message?.includes('relation') && !deleteError.message?.includes('does not exist') && deleteError.status !== 404) {
+    if (deleteError && deleteError.code !== 'PGRST116' && !deleteError.message?.includes('relation') && !deleteError.message?.includes('does not exist') && (deleteError as any)?.status !== 404) {
       console.error('Error deleting room type images:', deleteError)
       throw deleteError
     }
@@ -415,7 +415,7 @@ export async function upsertRoomTypeImages(roomTypeId: string, imageUrls: string
 
       if (insertError) {
         // If table doesn't exist, just log a warning instead of throwing
-        if (insertError.code === 'PGRST116' || insertError.message?.includes('relation') || insertError.message?.includes('does not exist') || insertError.status === 404) {
+        if (insertError.code === 'PGRST116' || insertError.message?.includes('relation') || insertError.message?.includes('does not exist') || (insertError as any)?.status === 404) {
           console.warn('room_type_images table does not exist yet. Please run the migration SQL.')
           return
         }
@@ -425,7 +425,7 @@ export async function upsertRoomTypeImages(roomTypeId: string, imageUrls: string
     }
   } catch (error: any) {
     // Handle table not found errors gracefully
-    if (error?.code === 'PGRST116' || error?.message?.includes('relation') || error?.message?.includes('does not exist') || error?.status === 404) {
+    if (error?.code === 'PGRST116' || error?.message?.includes('relation') || error?.message?.includes('does not exist') || (error as any)?.status === 404) {
       console.warn('room_type_images table does not exist yet. Please run the migration SQL.')
       return
     }

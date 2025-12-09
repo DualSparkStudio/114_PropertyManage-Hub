@@ -90,11 +90,17 @@ export function PropertyCard({
             No Image
           </div>
         )}
-          <div className="absolute top-4 right-4 flex gap-2">
-            <Badge variant={status === 'active' ? 'default' : 'secondary'} className="bg-white/90">
+          <div className="absolute top-4 right-4 flex gap-2 z-10">
+            <Badge 
+              variant={status === 'active' ? 'default' : 'secondary'} 
+              className="bg-white/95 backdrop-blur-sm shadow-md border border-gray-200/50 font-semibold"
+            >
               {type}
             </Badge>
-            <Badge variant={status === 'active' ? 'default' : 'destructive'} className="bg-white/90">
+            <Badge 
+              variant={status === 'active' ? 'default' : 'destructive'} 
+              className="bg-white/95 backdrop-blur-sm shadow-md border border-gray-200/50 font-semibold"
+            >
               {status === 'active' ? 'Active' : 'Inactive'}
             </Badge>
           </div>

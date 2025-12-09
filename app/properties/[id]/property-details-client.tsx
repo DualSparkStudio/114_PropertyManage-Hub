@@ -14,6 +14,7 @@ import { Bed, DollarSign, TrendingUp, Image as ImageIcon, Edit, Save, X } from "
 import Image from "next/image"
 import { updateProperty, getPropertyBySlug, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType, getRoomTypeImages, upsertRoomTypeImages } from "@/lib/supabase/properties"
 import { supabase } from "@/lib/supabase/client"
+import { generateSlug } from "@/lib/utils/slug"
 import type { RoomType, Feature } from "@/lib/types/database"
 import {
   Table,
@@ -53,6 +54,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
   const [roomTypes, setRoomTypes] = useState<(RoomType & { image_urls?: string[] })[]>([])
   const [amenities, setAmenities] = useState<string[]>([])
   const [features, setFeatures] = useState<Feature[]>([])
+  const [originalName, setOriginalName] = useState<string>("")
 
   useEffect(() => {
     async function fetchProperty() {
@@ -110,6 +112,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
               price: property.price,
               status: "Active",
             })
+            setOriginalName(property.name)
             setHeroImage(images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
             setGalleryImages(images.map(img => img.url))
             setRoomTypes(roomTypesWithImages)
@@ -162,6 +165,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
             price: data.price,
             status: "Active",
           })
+          setOriginalName(data.name)
           setHeroImage(images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
           setGalleryImages(images.map(img => img.url))
           setRoomTypes(roomTypesWithImages)
@@ -188,10 +192,8 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
   const handleSave = async () => {
     setLoading(true)
     try {
-      // Update main property data - include ALL fields that can be edited
-      // Supabase update() supports partial updates - it will only update the fields provided
-      // This means even if only one field is changed, it will be saved
-      await updateProperty(propertyData.id, {
+      // Prepare updates object
+      const updates: any = {
         name: propertyData.name || '',
         location: propertyData.location || '',
         type: propertyData.type || '',
@@ -199,7 +201,19 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         total_rooms: propertyData.totalRooms || 0,
         price: propertyData.price || 0,
         amenities: amenities || [],
-      })
+      }
+      
+      // If name changed, automatically update slug
+      if (propertyData.name && propertyData.name !== originalName) {
+        const newSlug = generateSlug(propertyData.name)
+        updates.slug = newSlug
+        setOriginalName(propertyData.name) // Update original name for next comparison
+      }
+      
+      // Update main property data - include ALL fields that can be edited
+      // Supabase update() supports partial updates - it will only update the fields provided
+      // This means even if only one field is changed, it will be saved
+      await updateProperty(propertyData.id, updates)
       
       // Update gallery images (all images including hero)
       // This ensures hero image and gallery are always in sync

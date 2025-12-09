@@ -8,8 +8,12 @@ import { Navbar } from "@/components/layout/navbar"
 import { getAllProperties, getPropertyAbout } from "@/lib/supabase/properties"
 import type { PropertyAbout } from "@/lib/types/database"
 
+interface PropertyAboutWithName extends PropertyAbout {
+  property_name: string
+}
+
 export default function AboutPage() {
-  const [aboutData, setAboutData] = useState<PropertyAbout[]>([])
+  const [aboutData, setAboutData] = useState<PropertyAboutWithName[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -21,7 +25,7 @@ export default function AboutPage() {
           return about ? { ...about, property_name: property.name } : null
         })
         const aboutResults = await Promise.all(aboutPromises)
-        const validAbout = aboutResults.filter((a): a is PropertyAbout & { property_name: string } => a !== null)
+        const validAbout = aboutResults.filter((a): a is PropertyAboutWithName => a !== null)
         setAboutData(validAbout)
       } catch (error) {
         console.error("Error fetching about data:", error)

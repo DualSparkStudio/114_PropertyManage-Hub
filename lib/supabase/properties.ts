@@ -19,7 +19,29 @@ export async function getAllProperties(): Promise<Property[]> {
 }
 
 /**
- * Get property by slug
+ * Get property by ID
+ */
+export async function getPropertyById(id: string): Promise<Property | null> {
+  const { data, error } = await supabase
+    .from('properties')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      // No rows returned
+      return null
+    }
+    console.error('Error fetching property by ID:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Get property by slug (kept for backward compatibility, but prefer getPropertyById)
  */
 export async function getPropertyBySlug(slug: string): Promise<Property | null> {
   const { data, error } = await supabase

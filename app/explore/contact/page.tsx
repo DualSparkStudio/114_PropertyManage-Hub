@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,17 @@ import { Label } from "@/components/ui/label"
 import { Phone, Mail, MapPin, Calendar } from "lucide-react"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { getAllProperties, getPropertyContact } from "@/lib/supabase/properties"
+import { supabase } from "@/lib/supabase/client"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import type { PropertyContact } from "@/lib/types/database"
+import type { Property } from "@/lib/types/database"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -16,12 +27,63 @@ export default function ContactPage() {
     email: "",
     phone: "",
     message: "",
+    property_id: "",
   })
+  const [contactData, setContactData] = useState<(PropertyContact & { property_name?: string })[]>([])
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    async function fetchContactData() {
+      try {
+        const propertiesData = await getAllProperties()
+        setProperties(propertiesData)
+        
+        const contactPromises = propertiesData.map(async (property) => {
+          const contact = await getPropertyContact(property.id)
+          return contact ? { ...contact, property_name: property.name } : null
+        })
+        const contactResults = await Promise.all(contactPromises)
+        const validContact = contactResults.filter((c): c is PropertyContact & { property_name: string } => c !== null)
+        setContactData(validContact)
+      } catch (error) {
+        console.error("Error fetching contact data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchContactData()
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    alert("Thank you for your message! We'll get back to you soon.")
-    setFormData({ name: "", email: "", phone: "", message: "" })
+    setSubmitting(true)
+    
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert({
+          property_id: formData.property_id || null,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+          message: formData.message,
+        })
+
+      if (error) {
+        console.error("Error submitting message:", error)
+        alert("Failed to send message. Please try again.")
+      } else {
+        alert("Thank you for your message! We'll get back to you soon.")
+        setFormData({ name: "", email: "", phone: "", message: "", property_id: "" })
+      }
+    } catch (error) {
+      console.error("Error submitting message:", error)
+      alert("Failed to send message. Please try again.")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -70,6 +132,22 @@ export default function ContactPage() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="property">Property (Optional)</Label>
+                  <Select value={formData.property_id} onValueChange={(value) => setFormData({ ...formData, property_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a property (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {properties.map((property) => (
+                        <SelectItem key={property.id} value={property.id}>
+                          {property.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="message">Message</Label>
                   <Input
                     id="message"
@@ -78,7 +156,9 @@ export default function ContactPage() {
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   />
                 </div>
-                <Button type="submit" className="w-full">Send Message</Button>
+                <Button type="submit" className="w-full" disabled={submitting}>
+                  {submitting ? "Sending..." : "Send Message"}
+                </Button>
               </form>
             </CardContent>
           </Card>
@@ -88,34 +168,55 @@ export default function ContactPage() {
               <CardTitle>Contact Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center gap-4">
-                <Phone className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Phone</p>
-                  <p className="font-medium">+1 (212) 555-0123</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <Mail className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">info@propertymanage.com</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <MapPin className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Address</p>
-                  <p className="font-medium">123 Park Avenue, New York, NY 10001</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <Calendar className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Hours</p>
-                  <p className="font-medium">Front Desk: 24/7<br />Restaurant: 6:00 AM - 11:00 PM</p>
-                </div>
-              </div>
+              {loading ? (
+                <p className="text-muted-foreground">Loading contact information...</p>
+              ) : contactData.length === 0 ? (
+                <p className="text-muted-foreground">No contact information available at this time.</p>
+              ) : (
+                contactData.map((contact, idx) => (
+                  <div key={`${contact.property_id}-${idx}`} className="space-y-4 pb-4 border-b last:border-0 last:pb-0">
+                    {contact.property_name && (
+                      <h3 className="font-semibold">{contact.property_name}</h3>
+                    )}
+                    {contact.phone && (
+                      <div className="flex items-center gap-4">
+                        <Phone className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Phone</p>
+                          <p className="font-medium">{contact.phone}</p>
+                        </div>
+                      </div>
+                    )}
+                    {contact.email && (
+                      <div className="flex items-center gap-4">
+                        <Mail className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Email</p>
+                          <p className="font-medium">{contact.email}</p>
+                        </div>
+                      </div>
+                    )}
+                    {contact.address && (
+                      <div className="flex items-center gap-4">
+                        <MapPin className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Address</p>
+                          <p className="font-medium">{contact.address}</p>
+                        </div>
+                      </div>
+                    )}
+                    {contact.hours && (
+                      <div className="flex items-center gap-4">
+                        <Calendar className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Hours</p>
+                          <p className="font-medium whitespace-pre-line">{contact.hours}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </div>

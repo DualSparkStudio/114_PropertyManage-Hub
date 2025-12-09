@@ -83,14 +83,25 @@ const PropertyCard = memo(function PropertyCard({ property }: { property: any })
 
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const [locationFilter, setLocationFilter] = useState("all")
+  const [typeFilter, setTypeFilter] = useState("all")
   const [properties, setProperties] = useState<any[]>([])
+  const [allLocations, setAllLocations] = useState<string[]>([])
+  const [allTypes, setAllTypes] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   
   useEffect(() => {
     async function fetchProperties() {
       try {
         const data = await getAllProperties()
-        // Fetch images for each property
+        
+        // Extract unique locations and types from database
+        const locations = Array.from(new Set(data.map(p => p.location).filter(Boolean)))
+        const types = Array.from(new Set(data.map(p => p.type).filter(Boolean)))
+        setAllLocations(locations)
+        setAllTypes(types)
+        
+        // Fetch images for each property and filter out properties without images
         const propertiesWithImages = await Promise.all(
           data.map(async (property) => {
             const images = await getPropertyImages(property.id)
@@ -102,12 +113,13 @@ export default function ExplorePage() {
               price: property.price,
               rating: property.rating,
               reviews: property.reviews,
-              image: images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
+              image: images[0]?.url || null,
               description: property.description || "",
             }
           })
         )
-        setProperties(propertiesWithImages)
+        // Only show properties that have images
+        setProperties(propertiesWithImages.filter(p => p.image))
       } catch (error) {
         console.error("Error fetching properties:", error)
       } finally {
@@ -119,15 +131,31 @@ export default function ExplorePage() {
   
   // Memoize filtered properties
   const filteredProperties = useMemo(() => {
-    if (!searchQuery) return properties
-    const query = searchQuery.toLowerCase()
-    return properties.filter(
-      (p) =>
-        p.name.toLowerCase().includes(query) ||
-        p.location.toLowerCase().includes(query) ||
-        (p.description && p.description.toLowerCase().includes(query))
-    )
-  }, [searchQuery, properties])
+    let filtered = properties
+    
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query) ||
+          p.location.toLowerCase().includes(query) ||
+          (p.description && p.description.toLowerCase().includes(query))
+      )
+    }
+    
+    // Filter by location
+    if (locationFilter !== "all") {
+      filtered = filtered.filter((p) => p.location === locationFilter)
+    }
+    
+    // Filter by type
+    if (typeFilter !== "all") {
+      filtered = filtered.filter((p) => p.type.toLowerCase() === typeFilter.toLowerCase())
+    }
+    
+    return filtered
+  }, [searchQuery, locationFilter, typeFilter, properties])
 
   return (
     <div className="min-h-screen bg-background">
@@ -159,26 +187,30 @@ export default function ExplorePage() {
                   />
                 </div>
               </div>
-              <Select>
+              <Select value={locationFilter} onValueChange={setLocationFilter}>
                 <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue placeholder="Location" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Locations</SelectItem>
-                  <SelectItem value="ny">New York</SelectItem>
-                  <SelectItem value="miami">Miami</SelectItem>
-                  <SelectItem value="sf">San Francisco</SelectItem>
+                  {allLocations.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <Select>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue placeholder="Property Type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="hotel">Hotel</SelectItem>
-                  <SelectItem value="resort">Resort</SelectItem>
-                  <SelectItem value="villa">Villa</SelectItem>
+                  {allTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Button className="w-full md:w-auto">Search</Button>

@@ -77,20 +77,27 @@ export default function RoomsPage() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {allRooms.map((room, idx) => {
-              const roomImage = room.image_urls && room.image_urls.length > 0 
-                ? room.image_urls[0] 
-                : room.image_url || "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"
-              
-              return (
-                <Card key={`${room.property_id}-${room.id}-${idx}`} className="overflow-hidden">
-                  <div className="relative h-48 w-full">
-                    <Image
-                      src={roomImage}
-                      alt={room.name}
-                      fill
-                      className="object-cover"
-                    />
+            {allRooms
+              .filter((room) => {
+                const roomImage = room.image_urls && room.image_urls.length > 0 
+                  ? room.image_urls[0] 
+                  : room.image_url
+                return !!roomImage
+              })
+              .map((room, idx) => {
+                const roomImage = room.image_urls && room.image_urls.length > 0 
+                  ? room.image_urls[0] 
+                  : room.image_url!
+                
+                return (
+                  <Card key={`${room.property_id}-${room.id}-${idx}`} className="overflow-hidden">
+                    <div className="relative h-48 w-full">
+                      <Image
+                        src={roomImage}
+                        alt={room.name}
+                        fill
+                        className="object-cover"
+                      />
                     {room.property_name && (
                       <div className="absolute top-4 right-4">
                         <Badge variant="secondary" className="bg-white/90">

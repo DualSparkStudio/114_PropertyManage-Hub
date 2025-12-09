@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, Suspense } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { getPropertyBySlug, getPropertyImages } from "@/lib/supabase/properties"
-import { useState, useEffect } from "react"
 import type { Property } from "@/lib/types/database"
 
 function CheckoutContent() {

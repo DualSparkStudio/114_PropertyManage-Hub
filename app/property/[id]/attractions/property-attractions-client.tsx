@@ -6,6 +6,7 @@ import { Mountain, MapPin } from "lucide-react"
 import { getPropertyBySlug, getPropertyAttractions } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { getSlugFromUrl } from "@/lib/utils/get-slug-from-url"
 import type { Property, Attraction } from "@/lib/types/database"
 
 interface PropertyAttractionsClientProps {
@@ -20,7 +21,8 @@ export function PropertyAttractionsClient({ propertySlug }: PropertyAttractionsC
   useEffect(() => {
     async function fetchData() {
       try {
-        const prop = await getPropertyBySlug(propertySlug)
+        const slug = propertySlug || getSlugFromUrl()
+        const prop = await getPropertyBySlug(slug)
         if (prop) {
           setProperty(prop)
           const attrs = await getPropertyAttractions(prop.id)

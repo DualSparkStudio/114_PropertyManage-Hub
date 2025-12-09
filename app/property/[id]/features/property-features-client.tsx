@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPropertyBySlug, getPropertyFeatures } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { getSlugFromUrl } from "@/lib/utils/get-slug-from-url"
 import type { Property, Feature } from "@/lib/types/database"
 
 interface PropertyFeaturesClientProps {
@@ -19,7 +20,8 @@ export function PropertyFeaturesClient({ propertySlug }: PropertyFeaturesClientP
   useEffect(() => {
     async function fetchData() {
       try {
-        const prop = await getPropertyBySlug(propertySlug)
+        const slug = propertySlug || getSlugFromUrl()
+        const prop = await getPropertyBySlug(slug)
         if (prop) {
           setProperty(prop)
           const feats = await getPropertyFeatures(prop.id)

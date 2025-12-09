@@ -8,8 +8,8 @@ import { PropertyContactClient } from "../[id]/contact/property-contact-client"
 // Catch-all route to handle any property slug and sub-routes dynamically
 // This ensures that even if a property slug changes, the page will still work
 export async function generateStaticParams() {
-  // Return slugs from seed data in catch-all format
-  // Include both main pages and sub-routes
+  // For static export, we generate pages for seed data slugs
+  // For changed slugs, the client components will read from the URL
   const seedSlugs = [
     'grand-hotel',
     'beach-resort',
@@ -21,16 +21,13 @@ export async function generateStaticParams() {
   
   const subRoutes = ['rooms', 'attractions', 'features', 'about', 'contact']
   
-  // Generate params for main pages and all sub-routes
   const params: Array<{ slug: string[] }> = []
   
-  // Main property pages
+  // Generate pages for all seed slugs and their sub-routes
   seedSlugs.forEach((slug) => {
+    // Main property page
     params.push({ slug: [slug] })
-  })
-  
-  // Sub-routes for each property
-  seedSlugs.forEach((slug) => {
+    // Sub-routes
     subRoutes.forEach((subRoute) => {
       params.push({ slug: [slug, subRoute] })
     })
@@ -49,10 +46,13 @@ export default function PropertyPageCatchAll({
   // ['grand-hotel'] for home page
   // ['grand-hotel', 'rooms'] for rooms page
   // etc.
+  // Note: If slug changed after build, params might be empty or wrong
+  // Client components will read the actual slug from the URL
   const propertySlug = params.slug?.[0] || ''
   const subRoute = params.slug?.[1] || ''
   
   // Route to appropriate component based on sub-route
+  // Client components will read the actual slug from window.location if needed
   switch (subRoute) {
     case 'rooms':
       return <PropertyRoomsClient propertySlug={propertySlug} />

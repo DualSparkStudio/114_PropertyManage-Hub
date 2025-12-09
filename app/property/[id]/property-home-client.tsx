@@ -13,6 +13,7 @@ import { MapPin, Bed, Users, Wifi, Car, Star, Home, Mountain, Sparkles, Info, Ph
 import { getPropertyBySlug, getPropertyImages } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { getSlugFromUrl } from "@/lib/utils/get-slug-from-url"
 import type { Property } from "@/lib/types/database"
 
 interface PropertyHomeClientProps {
@@ -31,11 +32,17 @@ export function PropertyHomeClient({ propertySlug }: PropertyHomeClientProps) {
   useEffect(() => {
     async function fetchProperty() {
       try {
-        const prop = await getPropertyBySlug(propertySlug)
-        if (prop) {
-          setProperty(prop)
-          const propertyImages = await getPropertyImages(prop.id)
-          setImages(propertyImages.map(img => img.url))
+        // If propertySlug is empty, get it from the URL
+        // This handles cases where the slug changed and the static page doesn't exist
+        let slug = propertySlug || getSlugFromUrl()
+        
+        if (slug) {
+          const prop = await getPropertyBySlug(slug)
+          if (prop) {
+            setProperty(prop)
+            const propertyImages = await getPropertyImages(prop.id)
+            setImages(propertyImages.map(img => img.url))
+          }
         }
       } catch (error) {
         console.error("Error fetching property:", error)

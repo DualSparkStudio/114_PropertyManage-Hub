@@ -10,6 +10,7 @@ import { getPropertyBySlug, getPropertyContact } from "@/lib/supabase/properties
 import { supabase } from "@/lib/supabase/client"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { getSlugFromUrl } from "@/lib/utils/get-slug-from-url"
 import type { Property, PropertyContact } from "@/lib/types/database"
 
 interface PropertyContactClientProps {
@@ -30,7 +31,8 @@ export function PropertyContactClient({ propertySlug }: PropertyContactClientPro
   useEffect(() => {
     async function fetchData() {
       try {
-        const prop = await getPropertyBySlug(propertySlug)
+        const slug = propertySlug || getSlugFromUrl()
+        const prop = await getPropertyBySlug(slug)
         if (prop) {
           setProperty(prop)
           const contactData = await getPropertyContact(prop.id)

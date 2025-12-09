@@ -10,9 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { StatsCard } from "@/components/reusable/stats-card"
-import { Bed, DollarSign, TrendingUp, Image as ImageIcon, Edit, Save, X } from "lucide-react"
+import { Bed, DollarSign, TrendingUp, Image as ImageIcon, Edit, Save, X, Power, PowerOff } from "lucide-react"
 import Image from "next/image"
-import { updateProperty, getPropertyById, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType, getRoomTypeImages, upsertRoomTypeImages } from "@/lib/supabase/properties"
+import { updateProperty, getPropertyById, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType, getRoomTypeImages, upsertRoomTypeImages, updatePropertyStatus } from "@/lib/supabase/properties"
 import { supabase } from "@/lib/supabase/client"
 import type { RoomType, Feature } from "@/lib/types/database"
 import {
@@ -46,7 +46,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
     description: "",
     totalRooms: 0,
     price: 0,
-    status: "Active",
+    status: "active" as 'active' | 'inactive',
   })
   const [heroImage, setHeroImage] = useState("https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
   const [galleryImages, setGalleryImages] = useState<string[]>([])
@@ -96,15 +96,18 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           })
         )
         
+        // Calculate actual total rooms from room types
+        const actualTotalRooms = roomTypesWithImages.reduce((sum, rt) => sum + (rt.number_of_rooms || 1), 0)
+        
         setPropertyData({
           id: property.id,
           name: property.name,
           location: property.location,
           type: property.type,
           description: property.description || "",
-          totalRooms: property.total_rooms,
+          totalRooms: actualTotalRooms || property.total_rooms || 0,
           price: property.price,
-          status: "Active",
+          status: (property.status as 'active' | 'inactive') || 'active',
         })
         setHeroImage(images[0]?.url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200")
         setGalleryImages(images.map(img => img.url))
@@ -262,6 +265,21 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
     setIsEditing(false)
   }
 
+  const handleStatusToggle = async () => {
+    try {
+      const newStatus = propertyData.status === 'active' ? 'inactive' : 'active'
+      await updatePropertyStatus(propertyData.id, newStatus)
+      setPropertyData({ ...propertyData, status: newStatus })
+      alert(`Property ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`)
+    } catch (error: any) {
+      console.error('Error updating property status:', error)
+      alert('Failed to update property status')
+    }
+  }
+
+  // Calculate actual total rooms from room types
+  const actualTotalRooms = roomTypes.reduce((sum, rt) => sum + (rt.number_of_rooms || 1), 0)
+
   if (loading) {
     return (
       <MainLayout>
@@ -309,10 +327,28 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                 </Button>
               </>
             ) : (
-              <Button onClick={() => setIsEditing(true)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Property
-              </Button>
+              <>
+                <Button
+                  variant={propertyData.status === 'active' ? 'secondary' : 'default'}
+                  onClick={handleStatusToggle}
+                >
+                  {propertyData.status === 'active' ? (
+                    <>
+                      <PowerOff className="mr-2 h-4 w-4" />
+                      Deactivate
+                    </>
+                  ) : (
+                    <>
+                      <Power className="mr-2 h-4 w-4" />
+                      Activate
+                    </>
+                  )}
+                </Button>
+                <Button onClick={() => setIsEditing(true)}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Property
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -347,9 +383,9 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         <div className="grid gap-4 md:grid-cols-3">
           <StatsCard
             title="Total Rooms"
-            value={propertyData.totalRooms}
+            value={actualTotalRooms || propertyData.totalRooms}
             icon={Bed}
-            change={`${propertyData.totalRooms} total`}
+            change={`${actualTotalRooms || propertyData.totalRooms} total`}
             trend="up"
           />
           <StatsCard
@@ -441,13 +477,15 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                         className="mt-1"
                       />
                     ) : (
-                      <p className="mt-1 font-medium">{propertyData.totalRooms}</p>
+                      <p className="mt-1 font-medium">{actualTotalRooms || propertyData.totalRooms}</p>
                     )}
                   </div>
                   <div>
                     <Label className="text-sm text-muted-foreground">Status</Label>
                     <div className="mt-1">
-                      <Badge variant="success">{propertyData.status}</Badge>
+                      <Badge variant={propertyData.status === 'active' ? 'default' : 'secondary'}>
+                        {propertyData.status === 'active' ? 'Active' : 'Inactive'}
+                      </Badge>
                     </div>
                   </div>
                 </div>

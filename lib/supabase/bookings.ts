@@ -102,7 +102,141 @@ export async function getBookingsByDateRange(
 }
 
 /**
- * Create a new booking
+ * Check for overlapping bookings to prevent double bookings
+ */
+export async function checkBookingConflict(
+  propertyId: string,
+  checkIn: string,
+  checkOut: string,
+  roomId?: string | null,
+  roomTypeId?: string | null,
+  excludeBookingId?: string
+): Promise<{ hasConflict: boolean; conflictingBookings: Booking[] }> {
+  // Get all confirmed bookings for this property
+  let query = supabase
+    .from('bookings')
+    .select('*')
+    .eq('property_id', propertyId)
+    .eq('status', 'confirmed')
+
+  if (excludeBookingId) {
+    query = query.neq('id', excludeBookingId)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error('Error checking booking conflicts:', error)
+    throw error
+  }
+
+  const bookings = data || []
+  
+  // Filter for actual overlaps
+  const conflictingBookings = bookings.filter((booking) => {
+    const bookingCheckIn = new Date(booking.check_in)
+    const bookingCheckOut = new Date(booking.check_out)
+    const newCheckIn = new Date(checkIn)
+    const newCheckOut = new Date(checkOut)
+
+    // Normalize dates to midnight for accurate comparison
+    bookingCheckIn.setHours(0, 0, 0, 0)
+    bookingCheckOut.setHours(0, 0, 0, 0)
+    newCheckIn.setHours(0, 0, 0, 0)
+    newCheckOut.setHours(0, 0, 0, 0)
+
+    // Check if dates overlap (inclusive check-in, exclusive check-out)
+    const datesOverlap = newCheckIn < bookingCheckOut && newCheckOut > bookingCheckIn
+
+    if (!datesOverlap) return false
+
+    // If specific room is booked, check room conflict
+    if (roomId && booking.room_id) {
+      return booking.room_id === roomId
+    }
+
+    // If room type is specified, check room type conflict
+    if (roomTypeId && booking.room_type_id) {
+      return booking.room_type_id === roomTypeId
+    }
+
+    // For property-level bookings without specific room/room type, 
+    // we need to check total availability (handled by checkPropertyAvailability)
+    return false
+  })
+
+  return {
+    hasConflict: conflictingBookings.length > 0,
+    conflictingBookings,
+  }
+}
+
+/**
+ * Check if all rooms of a property are booked for a date range
+ */
+export async function checkPropertyAvailability(
+  propertyId: string,
+  checkIn: string,
+  checkOut: string
+): Promise<{ isAvailable: boolean; availableRooms: number; totalRooms: number }> {
+  // Get total rooms from room types
+  const { data: roomTypes, error: roomTypesError } = await supabase
+    .from('room_types')
+    .select('number_of_rooms')
+    .eq('property_id', propertyId)
+
+  if (roomTypesError) {
+    console.error('Error fetching room types:', roomTypesError)
+    throw roomTypesError
+  }
+
+  const totalRooms = roomTypes?.reduce((sum, rt) => sum + (rt.number_of_rooms || 1), 0) || 0
+
+  if (totalRooms === 0) {
+    return { isAvailable: false, availableRooms: 0, totalRooms: 0 }
+  }
+
+  // Get all confirmed bookings for this property
+  const { data: bookings, error: bookingsError } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('property_id', propertyId)
+    .eq('status', 'confirmed')
+
+  if (bookingsError) {
+    console.error('Error fetching bookings:', bookingsError)
+    throw bookingsError
+  }
+
+  // Filter bookings that overlap with the requested date range
+  const checkInDate = new Date(checkIn)
+  const checkOutDate = new Date(checkOut)
+  checkInDate.setHours(0, 0, 0, 0)
+  checkOutDate.setHours(0, 0, 0, 0)
+
+  const overlappingBookings = bookings?.filter((booking) => {
+    const bookingCheckIn = new Date(booking.check_in)
+    const bookingCheckOut = new Date(booking.check_out)
+    bookingCheckIn.setHours(0, 0, 0, 0)
+    bookingCheckOut.setHours(0, 0, 0, 0)
+
+    // Check if dates overlap (inclusive check-in, exclusive check-out)
+    return checkInDate < bookingCheckOut && checkOutDate > bookingCheckIn
+  }) || []
+
+  // Count unique bookings (each booking represents one room)
+  const bookedRooms = overlappingBookings.length
+  const availableRooms = Math.max(0, totalRooms - bookedRooms)
+
+  return {
+    isAvailable: availableRooms > 0,
+    availableRooms,
+    totalRooms,
+  }
+}
+
+/**
+ * Create a new booking with conflict checking
  */
 export async function createBooking(booking: {
   property_id: string
@@ -119,6 +253,30 @@ export async function createBooking(booking: {
   amount: number
   special_requests?: string | null
 }): Promise<Booking> {
+  // Check for conflicts before creating
+  const conflict = await checkBookingConflict(
+    booking.property_id,
+    booking.check_in,
+    booking.check_out,
+    booking.room_id,
+    booking.room_type_id
+  )
+
+  if (conflict.hasConflict && booking.status === 'confirmed') {
+    throw new Error('Booking conflict: Room is already booked for these dates')
+  }
+
+  // Check property availability
+  const availability = await checkPropertyAvailability(
+    booking.property_id,
+    booking.check_in,
+    booking.check_out
+  )
+
+  if (!availability.isAvailable && booking.status === 'confirmed') {
+    throw new Error('All rooms are booked for these dates')
+  }
+
   const { data, error } = await supabase
     .from('bookings')
     .insert({

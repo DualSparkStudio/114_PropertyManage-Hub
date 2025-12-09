@@ -4,43 +4,97 @@ import { MainLayout } from "@/components/layout/main-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useState } from "react"
-import { format, startOfWeek, addDays, addWeeks, subWeeks, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from "date-fns"
+import { Badge } from "@/components/ui/badge"
+import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react"
+import { useState, useEffect } from "react"
+import { format, startOfWeek, addDays, addWeeks, subWeeks, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, parseISO } from "date-fns"
+import { getBookingsWithDetails } from "@/lib/supabase/bookings"
+import { getAllProperties, getPropertyRoomTypes } from "@/lib/supabase/properties"
+import { checkPropertyAvailability } from "@/lib/supabase/bookings"
+import type { BookingWithDetails } from "@/lib/types/database"
+import type { Property } from "@/lib/types/database"
 
-const bookings = [
-  {
-    id: "1",
-    guest: "John Doe",
-    property: "Grand Hotel",
-    checkIn: new Date(2024, 0, 15),
-    checkOut: new Date(2024, 0, 18),
-    source: "Website",
-    color: "#3b82f6",
-  },
-  {
-    id: "2",
-    guest: "Jane Smith",
-    property: "Beach Resort",
-    checkIn: new Date(2024, 0, 16),
-    checkOut: new Date(2024, 0, 20),
-    source: "Airbnb",
-    color: "#ef4444",
-  },
-  {
-    id: "3",
-    guest: "Mike Johnson",
-    property: "Mountain Villa",
-    checkIn: new Date(2024, 0, 17),
-    checkOut: new Date(2024, 0, 19),
-    source: "Booking.com",
-    color: "#10b981",
-  },
-]
+interface CalendarBooking {
+  id: string
+  guest: string
+  property: string
+  propertyId: string
+  checkIn: Date
+  checkOut: Date
+  source: string
+  color: string
+  status: string
+}
+
+const sourceColors: Record<string, string> = {
+  website: "#3b82f6",
+  airbnb: "#ef4444",
+  "booking.com": "#10b981",
+  makemytrip: "#f59e0b",
+  goibibo: "#8b5cf6",
+  manual: "#6b7280",
+}
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [view, setView] = useState<"month" | "week" | "day">("month")
+  const [bookings, setBookings] = useState<CalendarBooking[]>([])
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(true)
+  const [availabilityStatus, setAvailabilityStatus] = useState<Record<string, { isAvailable: boolean; availableRooms: number; totalRooms: number }>>({})
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [bookingsData, propertiesData] = await Promise.all([
+          getBookingsWithDetails(),
+          getAllProperties(),
+        ])
+
+        setProperties(propertiesData)
+
+        // Transform bookings for calendar display
+        const calendarBookings: CalendarBooking[] = bookingsData
+          .filter((b) => b.status === "confirmed" || b.status === "pending")
+          .map((booking) => {
+            const property = booking.property as any
+            return {
+              id: booking.id,
+              guest: booking.guest_name,
+              property: property?.name || "Unknown",
+              propertyId: booking.property_id,
+              checkIn: parseISO(booking.check_in),
+              checkOut: parseISO(booking.check_out),
+              source: booking.source,
+              color: sourceColors[booking.source] || "#6b7280",
+              status: booking.status,
+            }
+          })
+
+        setBookings(calendarBookings)
+
+        // Check availability for each property for today
+        const today = new Date().toISOString().split("T")[0]
+        const availabilityMap: Record<string, { isAvailable: boolean; availableRooms: number; totalRooms: number }> = {}
+        
+        for (const property of propertiesData) {
+          try {
+            const availability = await checkPropertyAvailability(property.id, today, today)
+            availabilityMap[property.id] = availability
+          } catch (error) {
+            console.error(`Error checking availability for ${property.name}:`, error)
+          }
+        }
+        
+        setAvailabilityStatus(availabilityMap)
+      } catch (error) {
+        console.error("Error fetching calendar data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
 
   const monthStart = startOfMonth(currentDate)
   const monthEnd = endOfMonth(currentDate)
@@ -50,10 +104,17 @@ export default function CalendarPage() {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
 
   const getBookingsForDate = (date: Date) => {
-    return bookings.filter(
-      (booking) =>
-        date >= booking.checkIn && date <= booking.checkOut
-    )
+    return bookings.filter((booking) => {
+      const checkIn = new Date(booking.checkIn)
+      const checkOut = new Date(booking.checkOut)
+      checkIn.setHours(0, 0, 0, 0)
+      checkOut.setHours(0, 0, 0, 0)
+      const currentDate = new Date(date)
+      currentDate.setHours(0, 0, 0, 0)
+      
+      // Date is within booking range (inclusive check-in, exclusive check-out)
+      return currentDate >= checkIn && currentDate < checkOut
+    })
   }
 
   return (
@@ -146,9 +207,9 @@ export default function CalendarPage() {
                           {dayBookings.map((booking) => (
                             <div
                               key={booking.id}
-                              className="text-xs p-1 rounded text-white"
+                              className="text-xs p-1 rounded text-white cursor-pointer hover:opacity-80 transition-opacity"
                               style={{ backgroundColor: booking.color }}
-                              title={`${booking.guest} - ${booking.property}`}
+                              title={`${booking.guest} - ${booking.property} (${booking.source}) - ${booking.status}`}
                             >
                               {booking.guest}
                             </div>
@@ -182,8 +243,9 @@ export default function CalendarPage() {
                           {dayBookings.map((booking) => (
                             <div
                               key={booking.id}
-                              className="text-xs p-2 rounded text-white"
+                              className="text-xs p-2 rounded text-white cursor-pointer hover:opacity-80 transition-opacity"
                               style={{ backgroundColor: booking.color }}
+                              title={`${booking.source} - ${booking.status}`}
                             >
                               <div className="font-medium">{booking.guest}</div>
                               <div className="text-xs opacity-90">
@@ -238,37 +300,62 @@ export default function CalendarPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-4 h-4 rounded"
-                  style={{ backgroundColor: "#3b82f6" }}
-                />
-                <span className="text-sm">Website</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-4 h-4 rounded"
-                  style={{ backgroundColor: "#ef4444" }}
-                />
-                <span className="text-sm">Airbnb</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-4 h-4 rounded"
-                  style={{ backgroundColor: "#10b981" }}
-                />
-                <span className="text-sm">Booking.com</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-4 h-4 rounded"
-                  style={{ backgroundColor: "#f59e0b" }}
-                />
-                <span className="text-sm">Walk-in</span>
-              </div>
+              {Object.entries(sourceColors).map(([source, color]) => (
+                <div key={source} className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded"
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="text-sm capitalize">{source}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
+
+        {/* Property Availability Status */}
+        {loading ? null : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                Property Availability Status (Today)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {properties.map((property) => {
+                  const availability = availabilityStatus[property.id]
+                  if (!availability) return null
+                  
+                  const isFullyBooked = !availability.isAvailable && availability.totalRooms > 0
+                  
+                  return (
+                    <div
+                      key={property.id}
+                      className="flex items-center justify-between p-3 rounded-lg border"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium">{property.name}</span>
+                        {isFullyBooked && (
+                          <Badge variant="destructive">All Rooms Sold</Badge>
+                        )}
+                        {!isFullyBooked && availability.totalRooms > 0 && (
+                          <Badge variant="success">
+                            {availability.availableRooms} of {availability.totalRooms} Available
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {availability.totalRooms === 0 ? "No rooms configured" : ""}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </MainLayout>
   )

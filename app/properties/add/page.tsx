@@ -123,14 +123,40 @@ export default function AddPropertyPage() {
 
       const property = await createProperty(propertyData)
       
-      // Save property images
+      // Save property images (convert Google Drive links to direct image URLs)
       if (propertyImages.length > 0) {
-        const imagesToInsert = propertyImages.map((url, index) => ({
-          property_id: property.id,
-          url: url,
-          alt_text: `${propertyData.name} image ${index + 1}`,
-          order_index: index,
-        }))
+        const imagesToInsert = propertyImages.map((url, index) => {
+          // Convert Google Drive sharing links to direct image URLs
+          let imageUrl = url
+          // Check if it's a Google Drive link
+          if (url.includes('drive.google.com')) {
+            // Extract file ID from various Google Drive URL formats
+            let fileId = null
+            // Format: https://drive.google.com/file/d/FILE_ID/view
+            const fileMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/)
+            if (fileMatch) {
+              fileId = fileMatch[1]
+            }
+            // Format: https://drive.google.com/open?id=FILE_ID
+            if (!fileId) {
+              const openMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+              if (openMatch) {
+                fileId = openMatch[1]
+              }
+            }
+            // Convert to direct image URL
+            if (fileId) {
+              imageUrl = `https://drive.google.com/uc?export=view&id=${fileId}`
+            }
+          }
+          
+          return {
+            property_id: property.id,
+            url: imageUrl,
+            alt_text: `${propertyData.name} image ${index + 1}`,
+            order_index: index,
+          }
+        })
         
         const { error: imagesError } = await supabase
           .from('property_images')
@@ -144,27 +170,54 @@ export default function AddPropertyPage() {
       // Create room types
       for (const roomType of roomTypes) {
         const { image_urls, ...roomTypeData } = roomType
+        
+        // Convert Google Drive links in image_urls to direct image URLs
+        let convertedImageUrls = image_urls || []
+        if (convertedImageUrls.length > 0) {
+          convertedImageUrls = convertedImageUrls.map((url: string) => {
+            if (url.includes('drive.google.com')) {
+              // Extract file ID from various Google Drive URL formats
+              let fileId = null
+              const fileMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/)
+              if (fileMatch) {
+                fileId = fileMatch[1]
+              }
+              if (!fileId) {
+                const openMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+                if (openMatch) {
+                  fileId = openMatch[1]
+                }
+              }
+              // Convert to direct image URL
+              if (fileId) {
+                return `https://drive.google.com/uc?export=view&id=${fileId}`
+              }
+            }
+            return url
+          })
+        }
+        
         const savedRoomType = await upsertRoomType({
           ...roomTypeData,
           property_id: property.id,
         })
         
         // Save room type images
-        if (image_urls && image_urls.length > 0) {
+        if (convertedImageUrls.length > 0) {
           try {
-            await upsertRoomTypeImages(savedRoomType.id, image_urls)
-            if (image_urls[0] && image_urls[0] !== savedRoomType.image_url) {
+            await upsertRoomTypeImages(savedRoomType.id, convertedImageUrls)
+            if (convertedImageUrls[0] && convertedImageUrls[0] !== savedRoomType.image_url) {
               await upsertRoomType({
                 ...savedRoomType,
-                image_url: image_urls[0],
+                image_url: convertedImageUrls[0],
               })
             }
           } catch (error: any) {
             console.warn('Error saving room type images:', error)
-            if (image_urls[0]) {
+            if (convertedImageUrls[0]) {
               await upsertRoomType({
                 ...savedRoomType,
-                image_url: image_urls[0],
+                image_url: convertedImageUrls[0],
               })
             }
           }
@@ -644,16 +697,27 @@ export default function AddPropertyPage() {
                     )}
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="mapEmbedUrl">Map Embed URL (Optional)</Label>
-                    <Input
+                    <Label htmlFor="mapEmbedUrl">Map Embed Code or URL (Optional)</Label>
+                    <Textarea
                       id="mapEmbedUrl"
-                      type="url"
                       value={formData.mapEmbedUrl}
-                      onChange={(e) => handleInputChange("mapEmbedUrl", e.target.value)}
-                      placeholder="https://www.google.com/maps/embed?pb=..."
+                      onChange={(e) => {
+                        let value = e.target.value.trim()
+                        // If it's an iframe code, extract the src URL
+                        if (value.includes('<iframe')) {
+                          const srcMatch = value.match(/src=["']([^"']+)["']/)
+                          if (srcMatch && srcMatch[1]) {
+                            value = srcMatch[1]
+                          }
+                        }
+                        handleInputChange("mapEmbedUrl", value)
+                      }}
+                      placeholder="Paste iframe code or embed URL: <iframe src=&quot;https://www.google.com/maps/embed?pb=...&quot;></iframe>"
+                      rows={3}
+                      className="resize-none font-mono text-xs"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Enter a Google Maps embed URL. If provided, this will be used instead of generating a map from the address.
+                      Paste the full iframe embed code or just the embed URL. The system will automatically extract the URL from iframe code.
                     </p>
                   </div>
                   <div className="space-y-2 md:col-span-2">

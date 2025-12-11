@@ -13,10 +13,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { StatsCard } from "@/components/reusable/stats-card"
 import { Bed, DollarSign, TrendingUp, Image as ImageIcon, Edit, Save, X, Power, PowerOff } from "lucide-react"
 import Image from "next/image"
-import { updateProperty, getPropertyById, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType, getRoomTypeImages, upsertRoomTypeImages, updatePropertyStatus } from "@/lib/supabase/properties"
+import { updateProperty, getPropertyById, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType, getRoomTypeImages, upsertRoomTypeImages, updatePropertyStatus, getPropertyContact } from "@/lib/supabase/properties"
 import { calculateOccupancy, getBookingStats } from "@/lib/supabase/bookings"
 import { supabase } from "@/lib/supabase/client"
-import type { RoomType, Feature } from "@/lib/types/database"
+import type { RoomType, Feature, PropertyContact } from "@/lib/types/database"
 import {
   Table,
   TableBody,
@@ -57,6 +57,13 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
   const [features, setFeatures] = useState<Feature[]>([])
   const [occupancy, setOccupancy] = useState<number>(0)
   const [monthlyRevenue, setMonthlyRevenue] = useState<number>(0)
+  const [contactInfo, setContactInfo] = useState<PropertyContact | null>(null)
+  const [contactFormData, setContactFormData] = useState({
+    phone: "",
+    email: "",
+    address: "",
+    hours: "",
+  })
 
   useEffect(() => {
     async function fetchProperty() {
@@ -118,6 +125,38 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         setRoomTypes(roomTypesWithImages)
         setAmenities(property.amenities || [])
         setFeatures(featuresData)
+        
+        // Fetch contact information
+        try {
+          const contactData = await getPropertyContact(property.id)
+          if (contactData) {
+            setContactInfo(contactData)
+            setContactFormData({
+              phone: contactData.phone || "",
+              email: contactData.email || "",
+              address: contactData.address || "",
+              hours: contactData.hours || "",
+            })
+          } else {
+            setContactInfo(null)
+            setContactFormData({
+              phone: "",
+              email: "",
+              address: "",
+              hours: "",
+            })
+          }
+        } catch (error) {
+          // Silently handle 406 errors (RLS policy issues)
+          console.warn(`Could not fetch contact for property ${property.id}:`, error)
+          setContactInfo(null)
+          setContactFormData({
+            phone: "",
+            email: "",
+            address: "",
+            hours: "",
+          })
+        }
         
         // Calculate occupancy and revenue (using only calculated rooms from room types)
         const occupancyRate = await calculateOccupancy(property.id, actualTotalRooms)
@@ -271,6 +310,27 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
       
       // Update features if they were modified
       // TODO: Implement feature updates if needed
+      
+      // Update or create contact information
+      if (contactFormData.phone || contactFormData.email || contactFormData.address || contactFormData.hours) {
+        const { error: contactError } = await supabase
+          .from('property_contact')
+          .upsert({
+            property_id: propertyData.id,
+            phone: contactFormData.phone || null,
+            email: contactFormData.email || null,
+            address: contactFormData.address || null,
+            hours: contactFormData.hours || null,
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'property_id'
+          })
+
+        if (contactError) {
+          console.error('Error updating property contact:', contactError)
+          // Don't fail the whole operation if contact update fails
+        }
+      }
       
       alert("Property updated successfully!")
       setIsEditing(false)
@@ -444,6 +504,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="rooms">Rooms</TabsTrigger>
             <TabsTrigger value="amenities">Amenities</TabsTrigger>
+            <TabsTrigger value="contact">Contact</TabsTrigger>
             <TabsTrigger value="gallery">Gallery</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
           </TabsList>
@@ -923,6 +984,95 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                     )}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="contact" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Contact Information</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Manage contact details for this property
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-phone">Phone</Label>
+                    {isEditing ? (
+                      <Input
+                        id="contact-phone"
+                        type="tel"
+                        value={contactFormData.phone}
+                        onChange={(e) => setContactFormData({ ...contactFormData, phone: e.target.value })}
+                        placeholder="+1 (212) 555-0123"
+                      />
+                    ) : (
+                      <p className="text-sm font-medium">{contactInfo?.phone || "Not set"}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-email">Email</Label>
+                    {isEditing ? (
+                      <Input
+                        id="contact-email"
+                        type="email"
+                        value={contactFormData.email}
+                        onChange={(e) => setContactFormData({ ...contactFormData, email: e.target.value })}
+                        placeholder="info@hotel.com"
+                      />
+                    ) : (
+                      <p className="text-sm font-medium">{contactInfo?.email || "Not set"}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="contact-address">Address</Label>
+                    {isEditing ? (
+                      <>
+                        <Textarea
+                          id="contact-address"
+                          value={contactFormData.address}
+                          onChange={(e) => setContactFormData({ ...contactFormData, address: e.target.value })}
+                          placeholder="123 Park Avenue, New York, NY 10001"
+                          rows={2}
+                          className="resize-none"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Enter the full address. This will be used to display a map on the contact page.
+                        </p>
+                        {contactFormData.address && (
+                          <div className="mt-2 p-3 bg-muted rounded-lg">
+                            <p className="text-xs text-muted-foreground mb-1">Preview:</p>
+                            <p className="text-sm font-medium whitespace-pre-line">{contactFormData.address}</p>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-sm font-medium whitespace-pre-line">{contactInfo?.address || "Not set"}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="contact-hours">Operating Hours</Label>
+                    {isEditing ? (
+                      <>
+                        <Textarea
+                          id="contact-hours"
+                          value={contactFormData.hours}
+                          onChange={(e) => setContactFormData({ ...contactFormData, hours: e.target.value })}
+                          placeholder="Front Desk: 24/7 | Restaurant: 6:00 AM - 11:00 PM"
+                          rows={2}
+                          className="resize-none"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Enter operating hours (e.g., "Front Desk: 24/7 | Restaurant: 6:00 AM - 11:00 PM")
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm font-medium whitespace-pre-line">{contactInfo?.hours || "Not set"}</p>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

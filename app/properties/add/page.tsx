@@ -19,6 +19,7 @@ import {
 import { ArrowLeft, Save } from "lucide-react"
 import { OptimizedLink } from "@/components/optimized-link"
 import { createProperty } from "@/lib/supabase/properties"
+import { supabase } from "@/lib/supabase/client"
 
 export default function AddPropertyPage() {
   const router = useRouter()
@@ -31,6 +32,10 @@ export default function AddPropertyPage() {
     description: "",
     totalRooms: "",
     amenities: [] as string[],
+    phone: "",
+    email: "",
+    address: "",
+    hours: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -74,7 +79,26 @@ export default function AddPropertyPage() {
         reviews: 0,
       }
 
-      await createProperty(propertyData)
+      const property = await createProperty(propertyData)
+      
+      // Create property contact information if provided
+      if (formData.phone || formData.email || formData.address || formData.hours) {
+        const { error: contactError } = await supabase
+          .from('property_contact')
+          .insert({
+            property_id: property.id,
+            phone: formData.phone || null,
+            email: formData.email || null,
+            address: formData.address || null,
+            hours: formData.hours || null,
+          })
+
+        if (contactError) {
+          console.error("Error creating property contact:", contactError)
+          // Don't fail the whole operation if contact creation fails
+        }
+      }
+
       alert("Property created successfully!")
       router.push("/properties")
     } catch (error: any) {
@@ -241,6 +265,74 @@ export default function AddPropertyPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Contact Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact Information</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Add contact details for this property (optional)
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    placeholder="+1 (212) 555-0123"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    placeholder="info@hotel.com"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Textarea
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange("address", e.target.value)}
+                    placeholder="123 Park Avenue, New York, NY 10001"
+                    rows={2}
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the full address. This will be used to display a map on the contact page.
+                  </p>
+                  {formData.address && (
+                    <div className="mt-2 p-3 bg-muted rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1">Preview:</p>
+                      <p className="text-sm font-medium whitespace-pre-line">{formData.address}</p>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="hours">Operating Hours</Label>
+                  <Textarea
+                    id="hours"
+                    value={formData.hours}
+                    onChange={(e) => handleInputChange("hours", e.target.value)}
+                    placeholder="Front Desk: 24/7 | Restaurant: 6:00 AM - 11:00 PM"
+                    rows={2}
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter operating hours (e.g., "Front Desk: 24/7 | Restaurant: 6:00 AM - 11:00 PM")
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-4 mt-6">

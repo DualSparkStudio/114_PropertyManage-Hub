@@ -16,6 +16,7 @@ import Image from "next/image"
 import { updateProperty, getPropertyById, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType, getRoomTypeImages, upsertRoomTypeImages, updatePropertyStatus, getPropertyContact } from "@/lib/supabase/properties"
 import { calculateOccupancy, getBookingStats } from "@/lib/supabase/bookings"
 import { supabase } from "@/lib/supabase/client"
+import { convertGoogleDriveUrl } from "@/lib/utils/convert-google-drive-url"
 import type { RoomType, Feature, PropertyContact } from "@/lib/types/database"
 import {
   Table,

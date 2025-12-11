@@ -225,7 +225,7 @@ export function PropertyContactClient({ propertyId }: PropertyContactClientProps
               <CardHeader>
                 <CardTitle>Contact Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
                 {contact?.phone && (
                   <div className="flex items-center gap-4">
                     <Phone className="h-5 w-5 text-muted-foreground" />
@@ -265,19 +265,14 @@ export function PropertyContactClient({ propertyId }: PropertyContactClientProps
                 {!contact && (
                   <p className="text-sm text-muted-foreground">Contact information not available.</p>
                 )}
+                {(contact?.address || property.location) && (
+                  <div className="pt-4 border-t">
+                    <p className="text-sm text-muted-foreground mb-2">Location</p>
+                    <MapEmbed address={contact?.address || property.location || ""} />
+                  </div>
+                )}
               </CardContent>
             </Card>
-            
-            {(contact?.address || property.location) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Location</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <MapEmbed address={contact?.address || property.location || ""} />
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </div>

@@ -327,7 +327,7 @@ export default function AddPropertyPage() {
                     className="resize-none"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Enter operating hours (e.g., "Front Desk: 24/7 | Restaurant: 6:00 AM - 11:00 PM")
+                    Enter operating hours (e.g., &quot;Front Desk: 24/7 | Restaurant: 6:00 AM - 11:00 PM&quot;)
                   </p>
                 </div>
               </div>

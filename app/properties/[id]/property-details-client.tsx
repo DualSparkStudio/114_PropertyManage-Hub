@@ -760,12 +760,16 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                             {roomType.image_urls && roomType.image_urls.length > 0 ? (
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                                 {roomType.image_urls.map((imageUrl, imgIdx) => (
-                                  <div key={imgIdx} className="relative h-32 w-full rounded-lg overflow-hidden group">
-                                    <Image
+                                  <div key={imgIdx} className="relative h-32 w-full rounded-lg overflow-hidden group bg-muted">
+                                    <img
                                       src={convertGoogleDriveUrl(imageUrl)}
                                       alt={`${roomType.name} ${imgIdx + 1}`}
-                                      fill
-                                      className="object-cover"
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        console.error('Failed to load image:', imageUrl)
+                                        const target = e.target as HTMLImageElement
+                                        target.style.display = 'none'
+                                      }}
                                     />
                                     {(isEditing || isEditingRooms) && (
                                       <Button
@@ -785,12 +789,13 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                                 ))}
                               </div>
                             ) : (
-                              <div className="h-32 w-full border-2 border-dashed rounded-lg flex items-center justify-center">
-                                <p className="text-sm text-muted-foreground">No images</p>
+                              <div className="h-32 w-full border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
+                                <p className="text-sm text-muted-foreground">No images added yet</p>
                               </div>
                             )}
                             {(isEditing || isEditingRooms) && (
                               <Button
+                                type="button"
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
@@ -798,9 +803,10 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                                   setImageDialogUrl("")
                                   setImageDialogOpen(true)
                                 }}
+                                className="w-full"
                               >
                                 <ImageIcon className="mr-2 h-4 w-4" />
-                                Add Image
+                                Add Room Image
                               </Button>
                             )}
                           </div>
@@ -994,26 +1000,38 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                           {roomType.image_urls && roomType.image_urls.length > 0 ? (
                             <div className="grid grid-cols-2 gap-2 flex-shrink-0">
                               {roomType.image_urls.slice(0, 4).map((imgUrl, imgIdx) => (
-                                <div key={imgIdx} className="relative h-24 w-24 rounded-lg overflow-hidden">
-                                  <Image
-                                    src={imgUrl}
+                                <div key={imgIdx} className="relative h-24 w-24 rounded-lg overflow-hidden bg-muted">
+                                  <img
+                                    src={convertGoogleDriveUrl(imgUrl)}
                                     alt={`${roomType.name} ${imgIdx + 1}`}
-                                    fill
-                                    className="object-cover"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      console.error('Failed to load image:', imgUrl)
+                                      const target = e.target as HTMLImageElement
+                                      target.style.display = 'none'
+                                    }}
                                   />
                                 </div>
                               ))}
                             </div>
                           ) : roomType.image_url ? (
-                            <div className="relative h-24 w-24 rounded-lg overflow-hidden flex-shrink-0">
-                              <Image
-                                src={roomType.image_url}
+                            <div className="relative h-24 w-24 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
+                              <img
+                                src={convertGoogleDriveUrl(roomType.image_url)}
                                 alt={roomType.name}
-                                fill
-                                className="object-cover"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  console.error('Failed to load image:', roomType.image_url)
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
+                                }}
                               />
                             </div>
-                          ) : null}
+                          ) : (
+                            <div className="h-24 w-24 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                              <Bed className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
                           <div className="flex-1">
                             <h4 className="font-semibold">{roomType.name}</h4>
                             <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mt-2 text-sm">

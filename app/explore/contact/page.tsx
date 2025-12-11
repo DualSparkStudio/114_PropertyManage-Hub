@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Phone, Mail, MapPin, Calendar } from "lucide-react"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
@@ -19,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { PropertyContact } from "@/lib/types/database"
 import type { Property } from "@/lib/types/database"
 
 // Google Maps embed component
@@ -70,38 +70,28 @@ export default function ContactPage() {
     message: "",
     property_id: "none",
   })
-  const [contactData, setContactData] = useState<(PropertyContact & { property_name?: string })[]>([])
   const [properties, setProperties] = useState<Property[]>([])
-  const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    async function fetchContactData() {
+    async function fetchProperties() {
       try {
         const propertiesData = await getAllProperties()
         setProperties(propertiesData)
-        
-        const contactPromises = propertiesData.map(async (property) => {
-          try {
-            const contact = await getPropertyContact(property.id)
-            return contact ? { ...contact, property_name: property.name } : null
-          } catch (error) {
-            // Silently handle 406 errors (RLS policy issues) or other errors
-            console.warn(`Could not fetch contact for property ${property.id}:`, error)
-            return null
-          }
-        })
-        const contactResults = await Promise.all(contactPromises)
-        const validContact = contactResults.filter((c): c is PropertyContact & { property_name: string } => c !== null)
-        setContactData(validContact)
       } catch (error) {
-        console.error("Error fetching contact data:", error)
-      } finally {
-        setLoading(false)
+        console.error("Error fetching properties:", error)
       }
     }
-    fetchContactData()
+    fetchProperties()
   }, [])
+
+  // PropertyManage contact information (from footer)
+  const propertyManageContact = {
+    address: "123 Property Street, Suite 100\nNew York, NY 10001, USA",
+    phone: "+1 (234) 567-8900",
+    email: "info@propertymanage.com",
+    website: "www.propertymanage.com",
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -204,11 +194,13 @@ export default function ContactPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="message">Message</Label>
-                  <Input
+                  <Textarea
                     id="message"
                     required
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    rows={4}
+                    className="resize-none"
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={submitting}>
@@ -219,71 +211,48 @@ export default function ContactPage() {
           </Card>
 
           <div className="space-y-6">
-            {loading ? (
-              <Card>
-                <CardContent className="py-12">
-                  <p className="text-center text-muted-foreground">Loading contact information...</p>
-                </CardContent>
-              </Card>
-            ) : contactData.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <p className="text-center text-muted-foreground">No contact information available at this time.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              contactData.map((contact, idx) => (
-                <Card key={`${contact.property_id}-${idx}`}>
-                  <CardHeader>
-                    <CardTitle>{contact.property_name || "Contact Information"}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {contact.phone && (
-                      <div className="flex items-center gap-4">
-                        <Phone className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Phone</p>
-                          <p className="font-medium">{contact.phone}</p>
-                        </div>
-                      </div>
-                    )}
-                    {contact.email && (
-                      <div className="flex items-center gap-4">
-                        <Mail className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Email</p>
-                          <p className="font-medium">{contact.email}</p>
-                        </div>
-                      </div>
-                    )}
-                    {contact.address && (
-                      <div className="flex items-center gap-4">
-                        <MapPin className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Address</p>
-                          <p className="font-medium">{contact.address}</p>
-                        </div>
-                      </div>
-                    )}
-                    {contact.hours && (
-                      <div className="flex items-center gap-4">
-                        <Calendar className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Hours</p>
-                          <p className="font-medium whitespace-pre-line">{contact.hours}</p>
-                        </div>
-                      </div>
-                    )}
-                    {contact.address && (
-                      <div className="pt-4 border-t">
-                        <p className="text-sm text-muted-foreground mb-2">Location</p>
-                        <MapEmbed address={contact.address} />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
-            )}
+            <Card>
+              <CardHeader>
+                <CardTitle>Contact Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Phone className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <a
+                      href={`tel:${propertyManageContact.phone.replace(/\s/g, '')}`}
+                      className="font-medium hover:text-primary transition-colors"
+                    >
+                      {propertyManageContact.phone}
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <a
+                      href={`mailto:${propertyManageContact.email}`}
+                      className="font-medium hover:text-primary transition-colors"
+                    >
+                      {propertyManageContact.email}
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <MapPin className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Address</p>
+                    <p className="font-medium whitespace-pre-line">{propertyManageContact.address}</p>
+                  </div>
+                </div>
+                <div className="pt-4 border-t">
+                  <p className="text-sm text-muted-foreground mb-2">Location</p>
+                  <MapEmbed address={propertyManageContact.address} />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

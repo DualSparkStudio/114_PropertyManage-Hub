@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Phone, Mail, MapPin, Calendar } from "lucide-react"
 import { getPropertyById, getPropertyContact } from "@/lib/supabase/properties"
 import { supabase } from "@/lib/supabase/client"
@@ -205,11 +206,13 @@ export function PropertyContactClient({ propertyId }: PropertyContactClientProps
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="message">Message</Label>
-                  <Input
+                  <Textarea
                     id="message"
                     required
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    rows={4}
+                    className="resize-none"
                   />
                 </div>
                 <Button type="submit" className="w-full">Send Message</Button>

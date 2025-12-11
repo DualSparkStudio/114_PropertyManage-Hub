@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { usePathname } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,6 +22,7 @@ interface PropertyHomeClientProps {
 }
 
 export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
+  const pathname = usePathname()
   const [property, setProperty] = useState<Property | null>(null)
   const [images, setImages] = useState<string[]>([])
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
@@ -29,8 +31,21 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
   useEffect(() => {
     async function fetchProperty() {
       try {
-        if (propertyId) {
-          const prop = await getPropertyById(propertyId)
+        // Get property ID from prop or extract from URL path
+        let id = propertyId
+        
+        // If no propertyId provided, extract from URL path
+        if (!id && typeof window !== 'undefined') {
+          const pathParts = pathname.split('/').filter(Boolean)
+          const propertyIndex = pathParts.indexOf('property')
+          if (propertyIndex !== -1 && pathParts[propertyIndex + 1]) {
+            id = pathParts[propertyIndex + 1]
+          }
+        }
+        
+        if (id) {
+          console.log('Fetching property with ID:', id)
+          const prop = await getPropertyById(id)
           if (prop) {
             setProperty(prop)
             const propertyImages = await getPropertyImages(prop.id)
@@ -42,16 +57,23 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
             setImages(convertedImages)
             const rooms = await getPropertyRoomTypes(prop.id)
             setRoomTypes(rooms)
+          } else {
+            console.error("Property not found with ID:", id)
+            setLoading(false)
           }
+        } else {
+          console.error("No property ID found in URL or props")
+          setLoading(false)
         }
       } catch (error) {
         console.error("Error fetching property:", error)
+        setLoading(false)
       } finally {
         setLoading(false)
       }
     }
     fetchProperty()
-  }, [propertyId])
+  }, [propertyId, pathname])
 
   // Calculate total rooms and max guests from room types
   const totalRooms = roomTypes.reduce((sum, rt) => sum + (rt.number_of_rooms || 0), 0)

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,6 +19,7 @@ interface PropertyRoomsClientProps {
 }
 
 export function PropertyRoomsClient({ propertyId }: PropertyRoomsClientProps) {
+  const pathname = usePathname()
   const [property, setProperty] = useState<Property | null>(null)
   const [roomTypes, setRoomTypes] = useState<(RoomType & { image_urls?: string[] })[]>([])
   const [loading, setLoading] = useState(true)
@@ -25,7 +27,23 @@ export function PropertyRoomsClient({ propertyId }: PropertyRoomsClientProps) {
   useEffect(() => {
     async function fetchData() {
       try {
-        const prop = await getPropertyById(propertyId)
+        // Get property ID from prop or extract from URL path
+        let id = propertyId
+        if (!id && typeof window !== 'undefined') {
+          const pathParts = pathname.split('/').filter(Boolean)
+          const propertyIndex = pathParts.indexOf('property')
+          if (propertyIndex !== -1 && pathParts[propertyIndex + 1]) {
+            id = pathParts[propertyIndex + 1]
+          }
+        }
+        
+        if (!id) {
+          console.error("No property ID found")
+          setLoading(false)
+          return
+        }
+        
+        const prop = await getPropertyById(id)
         if (prop) {
           setProperty(prop)
           const rooms = await getPropertyRoomTypes(prop.id)
@@ -55,7 +73,7 @@ export function PropertyRoomsClient({ propertyId }: PropertyRoomsClientProps) {
       }
     }
     fetchData()
-  }, [propertyId])
+  }, [propertyId, pathname])
 
   if (loading) {
     return (

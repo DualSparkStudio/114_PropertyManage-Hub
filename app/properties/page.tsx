@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import { PageHeader } from "@/components/reusable/page-header"
 import { PropertyCard } from "@/components/reusable/property-card"
 import { Card } from "@/components/ui/card"
@@ -91,6 +92,14 @@ export default function PropertiesPage() {
   
   return (
     <MainLayout>
+      <div className="mb-4">
+        <Breadcrumb
+          items={[
+            { label: "Admin", href: "/admin" },
+            { label: "Properties" },
+          ]}
+        />
+      </div>
       <div className="space-y-6">
         <PageHeader
           title="Properties"

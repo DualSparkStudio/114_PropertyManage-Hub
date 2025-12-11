@@ -12,6 +12,7 @@ import { MapPin, Bed, Users, Wifi, Car, Star, Home, Mountain, Sparkles, Info, Ph
 import { getPropertyById, getPropertyImages, getPropertyRoomTypes } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import type { Property, RoomType } from "@/lib/types/database"
 
 interface PropertyHomeClientProps {
@@ -108,6 +109,16 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
       <Navbar variant="property" propertyId={propertyId} />
 
       <div className="container mx-auto px-4 md:px-6 py-6 md:py-8">
+        {property && (
+          <div className="mb-6">
+            <Breadcrumb
+              items={[
+                { label: "Home", href: "/explore" },
+                { label: property.name },
+              ]}
+            />
+          </div>
+        )}
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">

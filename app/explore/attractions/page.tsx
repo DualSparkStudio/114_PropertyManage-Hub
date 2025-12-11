@@ -9,6 +9,7 @@ import { Mountain, MapPin } from "lucide-react"
 import { getAllAttractions } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import type { Attraction } from "@/lib/types/database"
 
 export default function AttractionsPage() {
@@ -53,6 +54,14 @@ export default function AttractionsPage() {
       <Navbar variant="explore" />
 
       <div className="container mx-auto px-6 py-12">
+        <div className="mb-6">
+          <Breadcrumb
+            items={[
+              { label: "Home", href: "/explore" },
+              { label: "Attractions" },
+            ]}
+          />
+        </div>
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Nearby Attractions</h1>
           <p className="text-muted-foreground">Discover the best places to visit near our properties</p>

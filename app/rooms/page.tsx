@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import { PageHeader } from "@/components/reusable/page-header"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -112,6 +113,14 @@ export default function RoomsPage() {
   }, [])
   return (
     <MainLayout>
+      <div className="mb-4">
+        <Breadcrumb
+          items={[
+            { label: "Admin", href: "/admin" },
+            { label: "Rooms" },
+          ]}
+        />
+      </div>
       <div className="space-y-6">
         <PageHeader
           title="Rooms"

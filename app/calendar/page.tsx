@@ -1,6 +1,7 @@
 "use client"
 
 import { MainLayout } from "@/components/layout/main-layout"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -119,6 +120,14 @@ export default function CalendarPage() {
 
   return (
     <MainLayout>
+      <div className="mb-4">
+        <Breadcrumb
+          items={[
+            { label: "Admin", href: "/admin" },
+            { label: "Calendar" },
+          ]}
+        />
+      </div>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>

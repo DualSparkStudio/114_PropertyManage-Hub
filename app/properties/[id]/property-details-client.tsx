@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -316,6 +317,15 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
 
   return (
     <MainLayout>
+      <div className="mb-4">
+        <Breadcrumb
+          items={[
+            { label: "Admin", href: "/admin" },
+            { label: "Properties", href: "/properties" },
+            { label: propertyData.name || "Property Details" },
+          ]}
+        />
+      </div>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>

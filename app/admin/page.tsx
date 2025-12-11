@@ -1,6 +1,7 @@
 "use client"
 
 import { MainLayout } from "@/components/layout/main-layout"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import { StatsCard } from "@/components/reusable/stats-card"
 import {
   Building2,
@@ -26,6 +27,13 @@ import { BookingSourceChart } from "@/components/reusable/booking-source-chart"
 export default function AdminDashboardPage() {
   return (
     <MainLayout>
+      <div className="mb-4">
+        <Breadcrumb
+          items={[
+            { label: "Admin" },
+          ]}
+        />
+      </div>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>

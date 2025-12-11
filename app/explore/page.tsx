@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Bed, Star, Search } from "lucide-react"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import { getAllProperties, getPropertyImages } from "@/lib/supabase/properties"
 
 // Memoized property card component
@@ -168,6 +169,14 @@ export default function ExplorePage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar variant="explore" onLogoClick={resetSearch} />
+
+      <div className="container mx-auto px-4 md:px-6 pt-4">
+        <Breadcrumb
+          items={[
+            { label: "Home" },
+          ]}
+        />
+      </div>
 
       {/* Hero Section */}
       <section className="relative py-8 md:py-16 overflow-hidden">

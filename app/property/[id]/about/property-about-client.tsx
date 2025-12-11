@@ -1,10 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getPropertyById, getPropertyAbout } from "@/lib/supabase/properties"
+import { getPropertyById, getPropertyAbout, getPropertyImages } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import type { Property, PropertyAbout } from "@/lib/types/database"
 
 interface PropertyAboutClientProps {
@@ -14,6 +16,7 @@ interface PropertyAboutClientProps {
 export function PropertyAboutClient({ propertyId }: PropertyAboutClientProps) {
   const [property, setProperty] = useState<Property | null>(null)
   const [about, setAbout] = useState<PropertyAbout | null>(null)
+  const [propertyImage, setPropertyImage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -22,8 +25,16 @@ export function PropertyAboutClient({ propertyId }: PropertyAboutClientProps) {
         const prop = await getPropertyById(propertyId)
         if (prop) {
           setProperty(prop)
-          const aboutData = await getPropertyAbout(prop.id)
-          setAbout(aboutData)
+          const images = await getPropertyImages(prop.id)
+          setPropertyImage(images[0]?.url || null)
+          try {
+            const aboutData = await getPropertyAbout(prop.id)
+            setAbout(aboutData)
+          } catch (error) {
+            // Silently handle 406 errors (RLS policy issues)
+            console.warn(`Could not fetch about for property ${prop.id}:`, error)
+            setAbout(null)
+          }
         }
       } catch (error) {
         console.error("Error fetching property about:", error)
@@ -67,12 +78,36 @@ export function PropertyAboutClient({ propertyId }: PropertyAboutClientProps) {
       <Navbar variant="property" propertyId={propertyId} />
 
       <div className="container mx-auto px-6 py-12 max-w-4xl">
+        {property && (
+          <div className="mb-6">
+            <Breadcrumb
+              items={[
+                { label: "Home", href: "/explore" },
+                { label: property.name, href: `/property/${propertyId}` },
+                { label: "About" },
+              ]}
+            />
+          </div>
+        )}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">About {property.name}</h1>
           <p className="text-muted-foreground">Learn more about our property</p>
         </div>
 
         <div className="space-y-6">
+          {propertyImage && (
+            <Card className="overflow-hidden">
+              <div className="relative h-64 w-full">
+                <Image
+                  src={propertyImage}
+                  alt={property.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            </Card>
+          )}
+          
           {about?.description && (
             <Card>
               <CardHeader>

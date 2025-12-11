@@ -11,6 +11,7 @@ import { Bed, Users, Square, MapPin, Search } from "lucide-react"
 import { getAllRoomTypes, getRoomTypeImages } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import { OptimizedLink } from "@/components/optimized-link"
 import type { RoomType } from "@/lib/types/database"
 
@@ -80,6 +81,14 @@ export default function RoomsPage() {
       <Navbar variant="explore" />
 
       <div className="container mx-auto px-6 py-12">
+        <div className="mb-6">
+          <Breadcrumb
+            items={[
+              { label: "Home", href: "/explore" },
+              { label: "Rooms" },
+            ]}
+          />
+        </div>
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">All Available Rooms</h1>
           <p className="text-muted-foreground">Choose from our selection of luxurious accommodations across all properties</p>

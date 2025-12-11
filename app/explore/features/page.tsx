@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { getAllFeatures } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import type { Feature } from "@/lib/types/database"
 
 export default function FeaturesPage() {
@@ -58,6 +59,14 @@ export default function FeaturesPage() {
       <Navbar variant="explore" />
 
       <div className="container mx-auto px-6 py-12">
+        <div className="mb-6">
+          <Breadcrumb
+            items={[
+              { label: "Home", href: "/explore" },
+              { label: "Features" },
+            ]}
+          />
+        </div>
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Property Features</h1>
           <p className="text-muted-foreground">Everything you need for a perfect stay across all our properties</p>

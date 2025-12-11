@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Phone, Mail, MapPin, Calendar } from "lucide-react"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import { getAllProperties, getPropertyContact } from "@/lib/supabase/properties"
 import { supabase } from "@/lib/supabase/client"
 import {
@@ -24,6 +25,24 @@ import type { Property } from "@/lib/types/database"
 // Google Maps embed component
 function MapEmbed({ address }: { address: string }) {
   const encodedAddress = encodeURIComponent(address)
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+  
+  // If no API key, show a link to Google Maps instead
+  if (!apiKey) {
+    return (
+      <div className="w-full h-64 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+        >
+          View on Google Maps
+        </a>
+      </div>
+    )
+  }
+  
   return (
     <div className="w-full h-64 rounded-lg overflow-hidden">
       <iframe
@@ -33,7 +52,11 @@ function MapEmbed({ address }: { address: string }) {
         loading="lazy"
         allowFullScreen
         referrerPolicy="no-referrer-when-downgrade"
-        src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBFw0Qbyq9zTFTd-tUY6d_s6U4ZYZjT9k8'}&q=${encodedAddress}`}
+        src={`https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodedAddress}`}
+        onError={() => {
+          // Fallback if iframe fails
+          console.warn("Google Maps embed failed")
+        }}
       />
     </div>
   )
@@ -115,6 +138,14 @@ export default function ContactPage() {
       <Navbar variant="explore" />
 
       <div className="container mx-auto px-6 py-12">
+        <div className="mb-6">
+          <Breadcrumb
+            items={[
+              { label: "Home", href: "/explore" },
+              { label: "Contact" },
+            ]}
+          />
+        </div>
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Contact Us</h1>
           <p className="text-muted-foreground">Get in touch with us for any inquiries</p>
@@ -188,73 +219,70 @@ export default function ContactPage() {
           </Card>
 
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {loading ? (
-                  <p className="text-muted-foreground">Loading contact information...</p>
-                ) : contactData.length === 0 ? (
-                  <p className="text-muted-foreground">No contact information available at this time.</p>
-                ) : (
-                  contactData.map((contact, idx) => (
-                    <div key={`${contact.property_id}-${idx}`} className="space-y-4 pb-4 border-b last:border-0 last:pb-0">
-                      {contact.property_name && (
-                        <h3 className="font-semibold">{contact.property_name}</h3>
-                      )}
-                      {contact.phone && (
-                        <div className="flex items-center gap-4">
-                          <Phone className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <p className="text-sm text-muted-foreground">Phone</p>
-                            <p className="font-medium">{contact.phone}</p>
-                          </div>
-                        </div>
-                      )}
-                      {contact.email && (
-                        <div className="flex items-center gap-4">
-                          <Mail className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <p className="text-sm text-muted-foreground">Email</p>
-                            <p className="font-medium">{contact.email}</p>
-                          </div>
-                        </div>
-                      )}
-                      {contact.address && (
-                        <div className="flex items-center gap-4">
-                          <MapPin className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <p className="text-sm text-muted-foreground">Address</p>
-                            <p className="font-medium">{contact.address}</p>
-                          </div>
-                        </div>
-                      )}
-                      {contact.hours && (
-                        <div className="flex items-center gap-4">
-                          <Calendar className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <p className="text-sm text-muted-foreground">Hours</p>
-                            <p className="font-medium whitespace-pre-line">{contact.hours}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-            
-            {/* Map Section */}
-            {contactData.length > 0 && contactData[0].address && (
+            {loading ? (
               <Card>
-                <CardHeader>
-                  <CardTitle>Location</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <MapEmbed address={contactData[0].address!} />
+                <CardContent className="py-12">
+                  <p className="text-center text-muted-foreground">Loading contact information...</p>
                 </CardContent>
               </Card>
+            ) : contactData.length === 0 ? (
+              <Card>
+                <CardContent className="py-12">
+                  <p className="text-center text-muted-foreground">No contact information available at this time.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              contactData.map((contact, idx) => (
+                <Card key={`${contact.property_id}-${idx}`}>
+                  <CardHeader>
+                    <CardTitle>{contact.property_name || "Contact Information"}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {contact.phone && (
+                      <div className="flex items-center gap-4">
+                        <Phone className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Phone</p>
+                          <p className="font-medium">{contact.phone}</p>
+                        </div>
+                      </div>
+                    )}
+                    {contact.email && (
+                      <div className="flex items-center gap-4">
+                        <Mail className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Email</p>
+                          <p className="font-medium">{contact.email}</p>
+                        </div>
+                      </div>
+                    )}
+                    {contact.address && (
+                      <div className="flex items-center gap-4">
+                        <MapPin className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Address</p>
+                          <p className="font-medium">{contact.address}</p>
+                        </div>
+                      </div>
+                    )}
+                    {contact.hours && (
+                      <div className="flex items-center gap-4">
+                        <Calendar className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Hours</p>
+                          <p className="font-medium whitespace-pre-line">{contact.hours}</p>
+                        </div>
+                      </div>
+                    )}
+                    {contact.address && (
+                      <div className="pt-4 border-t">
+                        <p className="text-sm text-muted-foreground mb-2">Location</p>
+                        <MapEmbed address={contact.address} />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
             )}
           </div>
         </div>

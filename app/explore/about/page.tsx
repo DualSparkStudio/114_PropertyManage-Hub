@@ -6,6 +6,7 @@ import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import { getAllProperties, getPropertyAbout, getPropertyImages } from "@/lib/supabase/properties"
 import type { PropertyAbout } from "@/lib/types/database"
 
@@ -23,14 +24,20 @@ export default function AboutPage() {
       try {
         const properties = await getAllProperties()
         const aboutPromises = properties.map(async (property) => {
-          const about = await getPropertyAbout(property.id)
-          if (!about) return null
-          const images = await getPropertyImages(property.id)
-          return { 
-            ...about, 
-            property_name: property.name,
-            property_image: images[0]?.url ?? null
-          } as PropertyAboutWithName
+          try {
+            const about = await getPropertyAbout(property.id)
+            if (!about) return null
+            const images = await getPropertyImages(property.id)
+            return { 
+              ...about, 
+              property_name: property.name,
+              property_image: images[0]?.url ?? null
+            } as PropertyAboutWithName
+          } catch (error) {
+            // Silently handle 406 errors (RLS policy issues)
+            console.warn(`Could not fetch about for property ${property.id}:`, error)
+            return null
+          }
         })
         const aboutResults = await Promise.all(aboutPromises)
         const validAbout = aboutResults.filter((a): a is PropertyAboutWithName => a !== null)
@@ -63,6 +70,14 @@ export default function AboutPage() {
       <Navbar variant="explore" />
 
       <div className="container mx-auto px-6 py-12 max-w-4xl">
+        <div className="mb-6">
+          <Breadcrumb
+            items={[
+              { label: "Home", href: "/explore" },
+              { label: "About" },
+            ]}
+          />
+        </div>
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">About Us</h1>
           <p className="text-muted-foreground">Learn more about PropertyManage Hub</p>

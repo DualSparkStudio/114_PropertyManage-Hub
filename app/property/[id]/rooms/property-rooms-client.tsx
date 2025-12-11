@@ -9,6 +9,7 @@ import { Bed, Users, Square } from "lucide-react"
 import { getPropertyById, getPropertyRoomTypes, getRoomTypeImages } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import type { Property, RoomType } from "@/lib/types/database"
 
 interface PropertyRoomsClientProps {
@@ -88,6 +89,17 @@ export function PropertyRoomsClient({ propertyId }: PropertyRoomsClientProps) {
       <Navbar variant="property" propertyId={propertyId} />
 
       <div className="container mx-auto px-6 py-12">
+        {property && (
+          <div className="mb-6">
+            <Breadcrumb
+              items={[
+                { label: "Home", href: "/explore" },
+                { label: property.name, href: `/property/${propertyId}` },
+                { label: "Rooms" },
+              ]}
+            />
+          </div>
+        )}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Available Rooms - {property.name}</h1>
           <p className="text-muted-foreground">Choose from our selection of luxurious accommodations</p>

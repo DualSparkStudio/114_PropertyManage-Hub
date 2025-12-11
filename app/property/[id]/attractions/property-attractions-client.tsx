@@ -1,11 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Mountain, MapPin } from "lucide-react"
 import { getPropertyById, getPropertyAttractions } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
+import { Breadcrumb } from "@/components/ui/breadcrumb"
 import type { Property, Attraction } from "@/lib/types/database"
 
 interface PropertyAttractionsClientProps {
@@ -68,6 +70,17 @@ export function PropertyAttractionsClient({ propertyId }: PropertyAttractionsCli
       <Navbar variant="property" propertyId={propertyId} />
 
       <div className="container mx-auto px-6 py-12">
+        {property && (
+          <div className="mb-6">
+            <Breadcrumb
+              items={[
+                { label: "Home", href: "/explore" },
+                { label: property.name, href: `/property/${propertyId}` },
+                { label: "Attractions" },
+              ]}
+            />
+          </div>
+        )}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Nearby Attractions - {property.name}</h1>
           <p className="text-muted-foreground">Discover the best places to visit during your stay</p>
@@ -80,12 +93,23 @@ export function PropertyAttractionsClient({ propertyId }: PropertyAttractionsCli
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {attractions.map((attraction) => (
-              <Card key={attraction.id}>
+              <Card key={attraction.id} className="overflow-hidden">
+                {attraction.image_url ? (
+                  <div className="relative h-48 w-full">
+                    <Image
+                      src={attraction.image_url}
+                      alt={attraction.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-48 w-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <Mountain className="h-16 w-16 text-primary/50" />
+                  </div>
+                )}
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Mountain className="h-6 w-6 text-primary" />
-                    </div>
                     <div>
                       <CardTitle>{attraction.name}</CardTitle>
                       {attraction.distance && (

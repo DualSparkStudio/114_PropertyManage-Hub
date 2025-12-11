@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { StatsCard } from "@/components/reusable/stats-card"
-import { Bed, DollarSign, TrendingUp, Image as ImageIcon, Edit, Save, X, Power, PowerOff } from "lucide-react"
+import { Bed, DollarSign, TrendingUp, Image as ImageIcon, Edit, Save, X, Power, PowerOff, Plus } from "lucide-react"
 import Image from "next/image"
 import { updateProperty, getPropertyById, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType, getRoomTypeImages, upsertRoomTypeImages, updatePropertyStatus, getPropertyContact } from "@/lib/supabase/properties"
 import { calculateOccupancy, getBookingStats } from "@/lib/supabase/bookings"
@@ -39,6 +39,7 @@ interface PropertyDetailsClientProps {
 
 export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps) {
   const [isEditing, setIsEditing] = useState(false)
+  const [isEditingRooms, setIsEditingRooms] = useState(false)
   const [loading, setLoading] = useState(true)
   const [propertyData, setPropertyData] = useState({
     id: "",
@@ -620,16 +621,24 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           <TabsContent value="rooms" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Room Types</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Room Types</CardTitle>
+                  {!isEditingRooms && !isEditing && (
+                    <Button onClick={() => setIsEditingRooms(true)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Room Types
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
-                {isEditing ? (
+                {(isEditing || isEditingRooms) ? (
                   <div className="space-y-4">
                     {roomTypes.map((roomType, idx) => (
                       <div key={roomType.id} className="p-4 border rounded-lg space-y-3">
                         <div className="flex items-start justify-between">
                           <h4 className="font-semibold">Room Type {idx + 1}</h4>
-                          {isEditing && (
+                          {(isEditing || isEditingRooms) && (
                             <Button
                               variant="destructive"
                               size="sm"
@@ -663,7 +672,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                                       fill
                                       className="object-cover"
                                     />
-                                    {isEditing && (
+                                    {(isEditing || isEditingRooms) && (
                                       <Button
                                         variant="destructive"
                                         size="icon"
@@ -685,7 +694,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                                 <p className="text-sm text-muted-foreground">No images</p>
                               </div>
                             )}
-                            {isEditing && (
+                            {(isEditing || isEditingRooms) && (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -810,30 +819,94 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                         </div>
                       </div>
                     ))}
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setRoomTypes([...roomTypes, {
-                          id: `new-${Date.now()}`,
-                          property_id: propertyData.id,
-                          name: "New Room Type",
-                          price: 0,
-                          beds: "",
-                          size: "",
-                          image_url: null,
-                          image_urls: [],
-                          max_guests: 2,
-                          additional_price_per_extra_guest: 0,
-                          number_of_rooms: 1,
-                          description: null,
-                          amenities: null,
-                          created_at: new Date().toISOString(),
-                          updated_at: new Date().toISOString(),
-                        }])
-                      }}
-                    >
-                      Add Room Type
-                    </Button>
+                    <div className="flex gap-2 pt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setRoomTypes([...roomTypes, {
+                            id: `new-${Date.now()}`,
+                            property_id: propertyData.id,
+                            name: "New Room Type",
+                            price: 0,
+                            beds: "",
+                            size: "",
+                            image_url: null,
+                            image_urls: [],
+                            max_guests: 2,
+                            additional_price_per_extra_guest: 0,
+                            number_of_rooms: 1,
+                            description: null,
+                            amenities: null,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                          }])
+                        }}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Room Type
+                      </Button>
+                      {isEditingRooms && (
+                        <>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setIsEditingRooms(false)
+                              // Reload to get original data
+                              window.location.reload()
+                            }}
+                          >
+                            <X className="mr-2 h-4 w-4" />
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={async () => {
+                              setLoading(true)
+                              try {
+                                // Update room types
+                                for (const roomType of roomTypes) {
+                                  const { image_urls, ...roomTypeData } = roomType
+                                  const savedRoomType = await upsertRoomType({
+                                    ...roomTypeData,
+                                    property_id: propertyData.id,
+                                  })
+                                  
+                                  if (image_urls && image_urls.length > 0) {
+                                    try {
+                                      await upsertRoomTypeImages(savedRoomType.id, image_urls)
+                                      if (image_urls[0] && image_urls[0] !== savedRoomType.image_url) {
+                                        await upsertRoomType({
+                                          ...savedRoomType,
+                                          image_url: image_urls[0],
+                                        })
+                                      }
+                                    } catch (error: any) {
+                                      console.warn('Error saving room type images:', error)
+                                      if (image_urls[0]) {
+                                        await upsertRoomType({
+                                          ...savedRoomType,
+                                          image_url: image_urls[0],
+                                        })
+                                      }
+                                    }
+                                  }
+                                }
+                                alert("Room types updated successfully!")
+                                setIsEditingRooms(false)
+                                window.location.reload()
+                              } catch (error: any) {
+                                console.error("Error updating room types:", error)
+                                alert(error.message || "Failed to update room types.")
+                              } finally {
+                                setLoading(false)
+                              }
+                            }}
+                          >
+                            <Save className="mr-2 h-4 w-4" />
+                            Save Room Types
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4">

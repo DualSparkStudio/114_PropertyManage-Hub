@@ -11,7 +11,7 @@ import type { PropertyAbout } from "@/lib/types/database"
 
 interface PropertyAboutWithName extends PropertyAbout {
   property_name: string
-  property_image?: string
+  property_image: string | null
 }
 
 export default function AboutPage() {
@@ -29,8 +29,8 @@ export default function AboutPage() {
           return { 
             ...about, 
             property_name: property.name,
-            property_image: images[0]?.url || null
-          }
+            property_image: images[0]?.url ?? null
+          } as PropertyAboutWithName
         })
         const aboutResults = await Promise.all(aboutPromises)
         const validAbout = aboutResults.filter((a): a is PropertyAboutWithName => a !== null)

@@ -268,13 +268,13 @@ export function PropertyContactClient({ propertyId }: PropertyContactClientProps
               </CardContent>
             </Card>
             
-            {contact?.address && (
+            {(contact?.address || property.location) && (
               <Card>
                 <CardHeader>
                   <CardTitle>Location</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <MapEmbed address={contact.address} />
+                  <MapEmbed address={contact?.address || property.location || ""} />
                 </CardContent>
               </Card>
             )}

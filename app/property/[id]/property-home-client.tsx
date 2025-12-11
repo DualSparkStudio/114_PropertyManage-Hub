@@ -176,16 +176,17 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
               <div className="space-y-4">
                 {/* Main Hero Image */}
                 <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden bg-muted">
-                  <Image
+                  <img
                     src={images[0]}
                     alt={property.name}
-                    fill
-                    className="object-cover"
-                    unoptimized
+                    className="w-full h-full object-cover"
                     onError={(e) => {
                       console.error('Failed to load image:', images[0])
                       const target = e.target as HTMLImageElement
                       target.style.display = 'none'
+                    }}
+                    onLoad={() => {
+                      console.log('Image loaded successfully:', images[0])
                     }}
                   />
                 </div>
@@ -194,16 +195,17 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {images.slice(1).map((img: string, idx: number) => (
                       <div key={idx} className="relative h-32 md:h-40 rounded-xl overflow-hidden bg-muted">
-                        <Image 
+                        <img 
                           src={img} 
                           alt={`${property.name} ${idx + 2}`} 
-                          fill 
-                          className="object-cover"
-                          unoptimized
+                          className="w-full h-full object-cover"
                           onError={(e) => {
                             console.error('Failed to load image:', img)
                             const target = e.target as HTMLImageElement
                             target.style.display = 'none'
+                          }}
+                          onLoad={() => {
+                            console.log('Image loaded successfully:', img)
                           }}
                         />
                       </div>

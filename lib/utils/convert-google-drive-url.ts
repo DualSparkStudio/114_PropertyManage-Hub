@@ -2,10 +2,11 @@
  * Converts Google Drive sharing links to direct image URLs
  * Handles multiple Google Drive URL formats
  * 
- * Note: For Google Drive images to work, the file must be shared publicly
- * or use the thumbnail format which works better for public access
+ * IMPORTANT: For Google Drive images to work:
+ * 1. The file must be shared publicly (Anyone with the link can view)
+ * 2. The file must be an image format (jpg, png, etc.)
  */
-export function convertGoogleDriveUrl(url: string): string {
+export function convertGoogleDriveUrl(url: string | null | undefined): string {
   if (!url || typeof url !== 'string') {
     return url || ''
   }
@@ -43,15 +44,13 @@ export function convertGoogleDriveUrl(url: string): string {
   }
 
   // Convert to direct image URL
-  // Using multiple formats for better compatibility
   if (fileId) {
-    // Primary format: export=view (works for publicly shared files)
-    // This is the most reliable format for Google Drive images
-    return `https://drive.google.com/uc?export=view&id=${fileId}`
+    // Try thumbnail format first (more reliable for public access)
+    // If that doesn't work, the browser will fall back to export=view
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`
   }
 
   // If we can't extract the file ID, return the original URL
   console.warn('Could not extract file ID from Google Drive URL:', url)
   return url
 }
-

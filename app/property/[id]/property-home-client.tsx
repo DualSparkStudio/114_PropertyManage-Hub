@@ -145,7 +145,8 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
 
             {/* Image Gallery */}
             {images.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                {/* Main Hero Image */}
                 <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden">
                   <Image
                     src={images[0]}
@@ -154,11 +155,17 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
                     className="object-cover"
                   />
                 </div>
+                {/* Additional Images Grid */}
                 {images.length > 1 && (
-                  <div className="grid grid-cols-2 gap-4">
-                    {images.slice(1, 3).map((img: string, idx: number) => (
-                      <div key={idx} className="relative h-32 md:h-48 rounded-xl overflow-hidden">
-                        <Image src={img} alt={`${property.name} ${idx + 2}`} fill className="object-cover" />
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {images.slice(1).map((img: string, idx: number) => (
+                      <div key={idx} className="relative h-32 md:h-40 rounded-xl overflow-hidden">
+                        <Image 
+                          src={img} 
+                          alt={`${property.name} ${idx + 2}`} 
+                          fill 
+                          className="object-cover" 
+                        />
                       </div>
                     ))}
                   </div>

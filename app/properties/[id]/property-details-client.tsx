@@ -753,17 +753,6 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                             />
                           </div>
                           <div>
-                            <Label>Size</Label>
-                            <Input
-                              value={roomType.size}
-                              onChange={(e) => {
-                                const updated = [...roomTypes]
-                                updated[idx].size = e.target.value
-                                setRoomTypes(updated)
-                              }}
-                            />
-                          </div>
-                          <div>
                             <Label>Max Guests</Label>
                             <Input
                               type="number"
@@ -946,10 +935,6 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                               <div>
                                 <span className="text-muted-foreground">Beds: </span>
                                 <span className="font-medium">{roomType.beds}</span>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Size: </span>
-                                <span className="font-medium">{roomType.size}</span>
                               </div>
                               <div>
                                 <span className="text-muted-foreground">Max Guests: </span>

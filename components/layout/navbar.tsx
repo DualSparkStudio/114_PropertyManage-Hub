@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet"
 import { Menu, Home, Bed, Mountain, Sparkles, Info, Phone } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface NavbarProps {
   variant?: "explore" | "property"
@@ -64,7 +65,7 @@ export function Navbar({ variant = "explore", propertyId, onLogoClick }: NavbarP
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white backdrop-blur-sm bg-white/95">
+    <header className="sticky top-0 z-50 border-b bg-background backdrop-blur-sm bg-background/95">
       <div className="container mx-auto px-4 md:px-6 py-4">
         {variant === "property" ? (
           // Property pages: Two-row layout
@@ -81,6 +82,7 @@ export function Navbar({ variant = "explore", propertyId, onLogoClick }: NavbarP
               <div className="flex items-center gap-4 md:gap-6">
                 {/* Quick Links - Explore and Admin on the right */}
                 <nav className="hidden sm:flex items-center gap-4 md:gap-6">
+                  <ThemeToggle />
                   <OptimizedLink 
                     href="/explore" 
                     className="text-sm font-medium hover:text-primary transition-colors"
@@ -129,7 +131,11 @@ export function Navbar({ variant = "explore", propertyId, onLogoClick }: NavbarP
                           </OptimizedLink>
                         )
                       })}
-                      <div className="pt-4 mt-4 border-t">
+                      <div className="pt-4 mt-4 border-t space-y-2">
+                        <div className="flex items-center justify-between px-4 py-2">
+                          <span className="text-sm font-medium text-muted-foreground">Theme</span>
+                          <ThemeToggle />
+                        </div>
                         <OptimizedLink
                           href="/explore"
                           onClick={() => setMobileMenuOpen(false)}
@@ -215,6 +221,7 @@ export function Navbar({ variant = "explore", propertyId, onLogoClick }: NavbarP
 
               {/* Quick Links - Admin prominently on the right */}
               <nav className="hidden sm:flex items-center gap-4 md:gap-6">
+                <ThemeToggle />
                 <OptimizedLink 
                   href="/explore" 
                   className="text-sm font-medium hover:text-primary transition-colors"
@@ -263,7 +270,11 @@ export function Navbar({ variant = "explore", propertyId, onLogoClick }: NavbarP
                         </OptimizedLink>
                       )
                     })}
-                    <div className="pt-4 mt-4 border-t">
+                    <div className="pt-4 mt-4 border-t space-y-2">
+                      <div className="flex items-center justify-between px-4 py-2">
+                        <span className="text-sm font-medium text-muted-foreground">Theme</span>
+                        <ThemeToggle />
+                      </div>
                       <OptimizedLink
                         href="/explore"
                         onClick={() => setMobileMenuOpen(false)}

@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Premium Neutral Luxury Palette */
+    /* Premium Neutral Luxury Palette - Light Mode */
     --background: 0 0% 99%;
     --foreground: 240 10% 8%;
     --card: 0 0% 100%;
@@ -38,6 +38,41 @@
     --ring: 230 75% 55%;
     --radius: 1rem;
   }
+
+  .dark {
+    /* Premium Neutral Luxury Palette - Dark Mode */
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 98%;
+    
+    /* Premium Primary - Lighter Indigo/Blue for dark mode */
+    --primary: 230 75% 65%;
+    --primary-foreground: 240 10% 4%;
+    
+    /* Premium Secondary - Darker Lavender */
+    --secondary: 260 20% 15%;
+    --secondary-foreground: 0 0% 98%;
+    
+    /* Premium Muted - Dark Gray */
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 4% 65%;
+    
+    /* Premium Accent - Brighter Gold/Amber */
+    --accent: 43 96% 66%;
+    --accent-foreground: 240 10% 4%;
+    
+    /* Destructive - Softer Red for dark mode */
+    --destructive: 0 72% 68%;
+    --destructive-foreground: 0 0% 98%;
+    
+    /* Borders - Darker Gray */
+    --border: 240 6% 20%;
+    --input: 240 6% 20%;
+    --ring: 230 75% 65%;
+  }
 }
 
 @layer base {
@@ -45,7 +80,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-[#fafafa] text-foreground;
+    @apply bg-background text-foreground;
     font-family: var(--font-dm-sans), var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     letter-spacing: 0.01em;
   }
@@ -54,7 +89,7 @@
     font-family: var(--font-playfair), var(--font-dm-sans), serif;
     font-weight: 600;
     letter-spacing: -0.02em;
-    color: hsl(240 10% 8%);
+    @apply text-foreground;
   }
   
   h1 {

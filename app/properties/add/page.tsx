@@ -26,12 +26,10 @@ export default function AddPropertyPage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
     name: "",
-    slug: "",
     location: "",
     type: "",
     price: "",
     description: "",
-    totalRooms: "",
     amenities: [] as string[],
     phone: "",
     email: "",
@@ -39,21 +37,13 @@ export default function AddPropertyPage() {
     hours: "",
     mapEmbedUrl: "",
   })
+  const [propertyImages, setPropertyImages] = useState<string[]>([])
   const [roomTypes, setRoomTypes] = useState<(RoomType & { image_urls?: string[] })[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [currentStep, setCurrentStep] = useState<"property" | "rooms" | "contact">("property")
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
-    
-    // Auto-generate slug from name
-    if (field === "name") {
-      const slug = value
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "")
-      setFormData((prev) => ({ ...prev, slug }))
-    }
   }
 
   const handleAmenityToggle = (amenity: string) => {
@@ -120,18 +110,36 @@ export default function AddPropertyPage() {
     try {
       const propertyData = {
         name: formData.name,
-        slug: formData.slug,
+        slug: `property-${Date.now()}`, // Auto-generate slug (not used in URLs but required by schema)
         location: formData.location,
         type: formData.type,
         price: parseFloat(formData.price) || 0,
         description: formData.description || null,
-        total_rooms: parseInt(formData.totalRooms) || 0,
+        total_rooms: 0, // Will be calculated from room types
         amenities: formData.amenities,
         rating: 0,
         reviews: 0,
       }
 
       const property = await createProperty(propertyData)
+      
+      // Save property images
+      if (propertyImages.length > 0) {
+        const imagesToInsert = propertyImages.map((url, index) => ({
+          property_id: property.id,
+          url: url,
+          alt_text: `${propertyData.name} image ${index + 1}`,
+          order_index: index,
+        }))
+        
+        const { error: imagesError } = await supabase
+          .from('property_images')
+          .insert(imagesToInsert)
+        
+        if (imagesError) {
+          console.error("Error saving property images:", imagesError)
+        }
+      }
       
       // Create room types
       for (const roomType of roomTypes) {
@@ -265,19 +273,6 @@ export default function AddPropertyPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="slug">Slug *</Label>
-                    <Input
-                      id="slug"
-                      value={formData.slug}
-                      onChange={(e) => handleInputChange("slug", e.target.value)}
-                      placeholder="grand-hotel"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      URL-friendly identifier (auto-generated from name)
-                    </p>
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="location">Location *</Label>
                     <Input
                       id="location"
@@ -319,18 +314,55 @@ export default function AddPropertyPage() {
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="totalRooms">Total Rooms *</Label>
-                    <Input
-                      id="totalRooms"
-                      type="number"
-                      value={formData.totalRooms}
-                      onChange={(e) => handleInputChange("totalRooms", e.target.value)}
-                      placeholder="120"
-                      min="1"
-                      required
-                    />
-                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Property Images */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Property Images</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Add multiple images for this property. The first image will be used as the hero image.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {propertyImages.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {propertyImages.map((imageUrl, idx) => (
+                        <div key={idx} className="relative h-32 w-full rounded-lg overflow-hidden group">
+                          <img
+                            src={imageUrl}
+                            alt={`Property image ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
+                            onClick={() => {
+                              setPropertyImages(propertyImages.filter((_, i) => i !== idx))
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const url = prompt("Enter image URL:")
+                      if (url) {
+                        setPropertyImages([...propertyImages, url])
+                      }
+                    }}
+                    className="w-full"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Property Image
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -433,15 +465,6 @@ export default function AddPropertyPage() {
                         />
                       </div>
                       <div>
-                        <Label>Size *</Label>
-                        <Input
-                          value={roomType.size}
-                          onChange={(e) => handleRoomTypeChange(idx, "size", e.target.value)}
-                          placeholder="300 sq ft"
-                          required
-                        />
-                      </div>
-                      <div>
                         <Label>Max Guests *</Label>
                         <Input
                           type="number"
@@ -486,16 +509,68 @@ export default function AddPropertyPage() {
                       />
                     </div>
                     <div>
-                      <Label>Room Image URL</Label>
-                      <Input
-                        value={roomType.image_urls?.[0] || ""}
-                        onChange={(e) => {
-                          const updated = [...roomTypes]
-                          updated[idx].image_urls = e.target.value ? [e.target.value] : []
-                          setRoomTypes(updated)
-                        }}
-                        placeholder="https://images.unsplash.com/photo-..."
-                      />
+                      <Label>Room Images</Label>
+                      {roomType.image_urls && roomType.image_urls.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2 mb-2">
+                          {roomType.image_urls.map((imageUrl, imgIdx) => (
+                            <div key={imgIdx} className="relative h-24 w-full rounded-lg overflow-hidden group">
+                              <img
+                                src={imageUrl}
+                                alt={`${roomType.name} ${imgIdx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity h-5 w-5"
+                                onClick={() => {
+                                  const updated = [...roomTypes]
+                                  updated[idx].image_urls = updated[idx].image_urls?.filter((_, i) => i !== imgIdx) || []
+                                  setRoomTypes(updated)
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Enter image URL and press Add"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.currentTarget.value) {
+                              const url = e.currentTarget.value.trim()
+                              if (url) {
+                                const updated = [...roomTypes]
+                                if (!updated[idx].image_urls) {
+                                  updated[idx].image_urls = []
+                                }
+                                updated[idx].image_urls = [...(updated[idx].image_urls || []), url]
+                                setRoomTypes(updated)
+                                e.currentTarget.value = ''
+                              }
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            const url = prompt("Enter room image URL:")
+                            if (url) {
+                              const updated = [...roomTypes]
+                              if (!updated[idx].image_urls) {
+                                updated[idx].image_urls = []
+                              }
+                              updated[idx].image_urls = [...(updated[idx].image_urls || []), url]
+                              setRoomTypes(updated)
+                            }
+                          }}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}

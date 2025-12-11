@@ -43,7 +43,7 @@ const PropertyCard = memo(function PropertyCard({ property }: { property: any })
           </div>
         )}
         <div className="absolute top-4 right-4">
-          <Badge variant="secondary" className="bg-white/90">
+          <Badge variant="secondary" className="bg-background/90">
             {property.type}
           </Badge>
         </div>

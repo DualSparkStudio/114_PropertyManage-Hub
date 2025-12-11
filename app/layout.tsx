@@ -8,6 +8,7 @@ import { SmoothScroll } from "@/components/premium/smooth-scroll";
 import { BlurredBlobs, GradientNoise } from "@/components/premium/background-effects";
 import { AOSInit } from "@/components/premium/aos-init";
 import { Playfair_Display, DM_Sans } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -50,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -58,15 +59,22 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
       </head>
       <body className={`${inter.variable} ${playfair.variable} ${dmSans.variable} font-sans`}>
-        <SmoothScroll>
-          <AOSInit />
-          <GradientNoise />
-          <BlurredBlobs />
-          <PrefetchHead />
-          <GitHubPagesScript />
-          <LoadingBar />
-          {children}
-        </SmoothScroll>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SmoothScroll>
+            <AOSInit />
+            <GradientNoise />
+            <BlurredBlobs />
+            <PrefetchHead />
+            <GitHubPagesScript />
+            <LoadingBar />
+            {children}
+          </SmoothScroll>
+        </ThemeProvider>
       </body>
     </html>
   );

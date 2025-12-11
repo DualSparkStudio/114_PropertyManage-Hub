@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { DbConnectionChecker } from "@/components/admin/db-connection-checker"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface TopbarProps {
   onMenuClick: () => void
@@ -20,7 +21,7 @@ interface TopbarProps {
 
 export function Topbar({ onMenuClick }: TopbarProps) {
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-2 md:gap-4 border-b border-border bg-white px-4 md:px-6">
+    <header className="sticky top-0 z-40 flex h-16 items-center gap-2 md:gap-4 border-b border-border bg-background px-4 md:px-6">
       <Button
         variant="ghost"
         size="icon"
@@ -42,6 +43,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       </div>
       <div className="flex items-center gap-2 md:gap-4">
         <DbConnectionChecker />
+        <ThemeToggle />
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive" />

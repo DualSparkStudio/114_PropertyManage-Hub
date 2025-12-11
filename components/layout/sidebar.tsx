@@ -136,7 +136,7 @@ export function Sidebar({ mobileMenuOpen, setMobileMenuOpen }: SidebarProps) {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex h-screen w-64 flex-col border-r border-border bg-white">
+      <aside className="hidden md:flex h-screen w-64 flex-col border-r border-border bg-background">
         <SidebarContent />
       </aside>
 

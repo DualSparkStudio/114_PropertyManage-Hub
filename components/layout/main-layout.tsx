@@ -13,7 +13,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar onMenuClick={() => setMobileMenuOpen(true)} />
-        <div className="flex-1 overflow-y-auto bg-[#fafafa] flex flex-col">
+        <div className="flex-1 overflow-y-auto bg-background flex flex-col">
           <main 
             className="flex-1 p-4 md:p-6"
             style={{ 

@@ -1,25 +1,34 @@
 import { PropertyDetailsClient } from "./property-details-client"
+import { getAllProperties } from "@/lib/supabase/properties"
 
 // Generate static params for static export
-// Using property slugs from seed data - these match the database
+// IMPORTANT: With static export, pages are generated at BUILD TIME
+// The Supabase client may not work during build, so we return a generic placeholder
+// The client component will extract the property ID from the URL and fetch data
 export async function generateStaticParams() {
-  // Return property slugs that match the seed data
-  // These will be statically generated, but pages will fetch fresh data at runtime
-  return [
-    { id: '550e8400-e29b-41d4-a716-446655440000' }, // grand-hotel
-    { id: '550e8400-e29b-41d4-a716-446655440001' }, // beach-resort
-    { id: '550e8400-e29b-41d4-a716-446655440002' }, // mountain-villa
-    { id: '550e8400-e29b-41d4-a716-446655440003' }, // city-hotel
-    { id: '550e8400-e29b-41d4-a716-446655440004' }, // lakeside-resort
-    { id: '550e8400-e29b-41d4-a716-446655440005' }, // desert-oasis
-    // Also include slugs for backward compatibility
-    { id: 'grand-hotel' },
-    { id: 'beach-resort' },
-    { id: 'mountain-villa' },
-    { id: 'city-hotel' },
-    { id: 'lakeside-resort' },
-    { id: 'desert-oasis' },
-  ]
+  try {
+    // Try to fetch all properties from database at build time
+    // Note: This may fail if Supabase env vars aren't available during build
+    const properties = await getAllProperties()
+    console.log(`[generateStaticParams - Admin] Found ${properties.length} properties to generate`)
+    
+    if (properties.length === 0) {
+      console.warn('[generateStaticParams - Admin] No properties found, returning generic placeholder')
+      // Return a generic placeholder that will match any property ID
+      // The client component will extract the actual ID from the URL
+      return [{ id: '_' }]
+    }
+    
+    // Return all property IDs for static generation
+    return properties.map((property) => ({
+      id: property.id,
+    }))
+  } catch (error) {
+    console.error('[generateStaticParams - Admin] Error fetching properties (this is OK during build):', error)
+    // Return a generic placeholder that will work for any property ID
+    // The client component will extract the ID from the URL
+    return [{ id: '_' }]
+  }
 }
 
 export default function PropertyDetailsPage({
@@ -27,6 +36,7 @@ export default function PropertyDetailsPage({
 }: {
   params: { id: string }
 }) {
-  const propertyId = params.id
+  // If the ID is '_' (placeholder), the client component will extract it from the URL
+  const propertyId = params.id === '_' ? '' : params.id
   return <PropertyDetailsClient propertyId={propertyId} />
 }

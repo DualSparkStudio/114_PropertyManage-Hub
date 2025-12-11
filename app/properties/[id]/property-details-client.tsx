@@ -71,8 +71,26 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
   useEffect(() => {
     async function fetchProperty() {
       try {
+        // Get property ID from prop or extract from URL path
+        let id = propertyId
+        
+        // If no propertyId provided, extract from URL path
+        if (!id && typeof window !== 'undefined') {
+          const pathParts = window.location.pathname.split('/').filter(Boolean)
+          const propertiesIndex = pathParts.indexOf('properties')
+          if (propertiesIndex !== -1 && pathParts[propertiesIndex + 1]) {
+            id = pathParts[propertiesIndex + 1]
+          }
+        }
+        
+        if (!id) {
+          console.error("No property ID found in URL or props")
+          setLoading(false)
+          return
+        }
+        
         // Get property by ID
-        const property = await getPropertyById(propertyId)
+        const property = await getPropertyById(id)
         
         if (!property) {
           console.error(`Property not found by ID "${propertyId}"`)

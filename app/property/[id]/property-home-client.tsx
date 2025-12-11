@@ -34,7 +34,12 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
           if (prop) {
             setProperty(prop)
             const propertyImages = await getPropertyImages(prop.id)
-            setImages(propertyImages.map(img => convertGoogleDriveUrl(img.url)))
+            const convertedImages = propertyImages.map(img => {
+              const converted = convertGoogleDriveUrl(img.url)
+              console.log('Image URL conversion:', { original: img.url, converted })
+              return converted
+            })
+            setImages(convertedImages)
             const rooms = await getPropertyRoomTypes(prop.id)
             setRoomTypes(rooms)
           }
@@ -148,24 +153,36 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
             {images.length > 0 && (
               <div className="space-y-4">
                 {/* Main Hero Image */}
-                <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden">
+                <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden bg-muted">
                   <Image
                     src={images[0]}
                     alt={property.name}
                     fill
                     className="object-cover"
+                    unoptimized
+                    onError={(e) => {
+                      console.error('Failed to load image:', images[0])
+                      const target = e.target as HTMLImageElement
+                      target.style.display = 'none'
+                    }}
                   />
                 </div>
                 {/* Additional Images Grid */}
                 {images.length > 1 && (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {images.slice(1).map((img: string, idx: number) => (
-                      <div key={idx} className="relative h-32 md:h-40 rounded-xl overflow-hidden">
+                      <div key={idx} className="relative h-32 md:h-40 rounded-xl overflow-hidden bg-muted">
                         <Image 
                           src={img} 
                           alt={`${property.name} ${idx + 2}`} 
                           fill 
-                          className="object-cover" 
+                          className="object-cover"
+                          unoptimized
+                          onError={(e) => {
+                            console.error('Failed to load image:', img)
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                          }}
                         />
                       </div>
                     ))}

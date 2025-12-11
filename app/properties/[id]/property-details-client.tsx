@@ -63,6 +63,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
     email: "",
     address: "",
     hours: "",
+    mapEmbedUrl: "",
   })
 
   useEffect(() => {
@@ -136,6 +137,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
               email: contactData.email || "",
               address: contactData.address || "",
               hours: contactData.hours || "",
+              mapEmbedUrl: contactData.map_embed_url || "",
             })
           } else {
             setContactInfo(null)
@@ -144,18 +146,20 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
               email: "",
               address: "",
               hours: "",
+              mapEmbedUrl: "",
             })
           }
         } catch (error) {
           // Silently handle 406 errors (RLS policy issues)
           console.warn(`Could not fetch contact for property ${property.id}:`, error)
-          setContactInfo(null)
-          setContactFormData({
-            phone: "",
-            email: "",
-            address: "",
-            hours: "",
-          })
+            setContactInfo(null)
+            setContactFormData({
+              phone: "",
+              email: "",
+              address: "",
+              hours: "",
+              mapEmbedUrl: "",
+            })
         }
         
         // Calculate occupancy and revenue (using only calculated rooms from room types)
@@ -312,7 +316,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
       // TODO: Implement feature updates if needed
       
       // Update or create contact information
-      if (contactFormData.phone || contactFormData.email || contactFormData.address || contactFormData.hours) {
+      if (contactFormData.phone || contactFormData.email || contactFormData.address || contactFormData.hours || contactFormData.mapEmbedUrl) {
         const { error: contactError } = await supabase
           .from('property_contact')
           .upsert({
@@ -321,6 +325,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
             email: contactFormData.email || null,
             address: contactFormData.address || null,
             hours: contactFormData.hours || null,
+            map_embed_url: contactFormData.mapEmbedUrl || null,
             updated_at: new Date().toISOString(),
           }, {
             onConflict: 'property_id'

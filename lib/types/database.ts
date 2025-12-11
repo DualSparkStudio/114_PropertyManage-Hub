@@ -89,6 +89,7 @@ export interface PropertyContact {
   email: string | null
   address: string | null
   hours: string | null
+  map_embed_url: string | null
   created_at: string
   updated_at: string
 }

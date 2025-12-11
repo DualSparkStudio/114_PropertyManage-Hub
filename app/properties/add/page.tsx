@@ -36,6 +36,7 @@ export default function AddPropertyPage() {
     email: "",
     address: "",
     hours: "",
+    mapEmbedUrl: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -82,7 +83,7 @@ export default function AddPropertyPage() {
       const property = await createProperty(propertyData)
       
       // Create property contact information if provided
-      if (formData.phone || formData.email || formData.address || formData.hours) {
+      if (formData.phone || formData.email || formData.address || formData.hours || formData.mapEmbedUrl) {
         const { error: contactError } = await supabase
           .from('property_contact')
           .insert({
@@ -91,6 +92,7 @@ export default function AddPropertyPage() {
             email: formData.email || null,
             address: formData.address || null,
             hours: formData.hours || null,
+            map_embed_url: formData.mapEmbedUrl || null,
           })
 
         if (contactError) {
@@ -315,6 +317,19 @@ export default function AddPropertyPage() {
                       <p className="text-sm font-medium whitespace-pre-line">{formData.address}</p>
                     </div>
                   )}
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="mapEmbedUrl">Map Embed URL (Optional)</Label>
+                  <Input
+                    id="mapEmbedUrl"
+                    type="url"
+                    value={formData.mapEmbedUrl}
+                    onChange={(e) => handleInputChange("mapEmbedUrl", e.target.value)}
+                    placeholder="https://www.google.com/maps/embed?pb=..."
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter a Google Maps embed URL. If provided, this will be used instead of generating a map from the address.
+                  </p>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="hours">Operating Hours</Label>

@@ -23,7 +23,36 @@ import {
 import type { Property } from "@/lib/types/database"
 
 // Google Maps embed component
-function MapEmbed({ address }: { address: string }) {
+function MapEmbed({ address, embedUrl }: { address?: string; embedUrl?: string | null }) {
+  // If embed URL is provided, use it directly
+  if (embedUrl) {
+    return (
+      <div className="w-full h-64 rounded-lg overflow-hidden">
+        <iframe
+          width="100%"
+          height="100%"
+          style={{ border: 0 }}
+          loading="lazy"
+          allowFullScreen
+          referrerPolicy="no-referrer-when-downgrade"
+          src={embedUrl}
+          onError={() => {
+            console.warn("Map embed failed")
+          }}
+        />
+      </div>
+    )
+  }
+  
+  // Otherwise, use address to generate embed
+  if (!address) {
+    return (
+      <div className="w-full h-64 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+        <p className="text-muted-foreground">No map available</p>
+      </div>
+    )
+  }
+  
   const encodedAddress = encodeURIComponent(address)
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
   
@@ -249,7 +278,7 @@ export default function ContactPage() {
                 </div>
                 <div className="pt-4 border-t">
                   <p className="text-sm text-muted-foreground mb-2">Location</p>
-                  <MapEmbed address={propertyManageContact.address} />
+                  <MapEmbed address={propertyManageContact.address} embedUrl={null} />
                 </div>
               </CardContent>
             </Card>

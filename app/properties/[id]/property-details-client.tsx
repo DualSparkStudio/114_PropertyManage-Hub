@@ -42,6 +42,9 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
   const [isEditing, setIsEditing] = useState(false)
   const [isEditingRooms, setIsEditingRooms] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [imageDialogOpen, setImageDialogOpen] = useState(false)
+  const [imageDialogUrl, setImageDialogUrl] = useState("")
+  const [imageDialogContext, setImageDialogContext] = useState<{ type: 'property' | 'room' | 'gallery'; roomIndex?: number } | null>(null)
   const [propertyData, setPropertyData] = useState({
     id: "",
     name: "",
@@ -396,8 +399,74 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         <div className="text-center py-12">
           <p className="text-muted-foreground">Loading property details...</p>
         </div>
+
+        {/* Image URL Dialog */}
+        <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>
+                {imageDialogContext?.type === 'room' ? 'Add Room Image' : imageDialogContext?.type === 'gallery' ? 'Add Gallery Image' : 'Add Image'}
+              </DialogTitle>
+              <DialogDescription>
+                Enter the image URL. You can use Google Drive links or any direct image URL.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Input
+                placeholder="https://drive.google.com/file/d/..."
+                value={imageDialogUrl}
+                onChange={(e) => setImageDialogUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddImage()
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setImageDialogOpen(false)
+                  setImageDialogUrl("")
+                  setImageDialogContext(null)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleAddImage}>
+                Add Image
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </MainLayout>
     )
+
+    function handleAddImage() {
+      if (!imageDialogUrl.trim() || !imageDialogContext) return
+
+      if (imageDialogContext.type === 'room' && imageDialogContext.roomIndex !== undefined) {
+        const updated = [...roomTypes]
+        if (!updated[imageDialogContext.roomIndex].image_urls) {
+          updated[imageDialogContext.roomIndex].image_urls = []
+        }
+        updated[imageDialogContext.roomIndex].image_urls = [
+          ...(updated[imageDialogContext.roomIndex].image_urls || []),
+          imageDialogUrl.trim()
+        ]
+        setRoomTypes(updated)
+      } else if (imageDialogContext.type === 'gallery') {
+        setGalleryImages([...galleryImages, imageDialogUrl.trim()])
+      } else if (imageDialogContext.type === 'property') {
+        setHeroImage(imageDialogUrl.trim())
+      }
+
+      setImageDialogOpen(false)
+      setImageDialogUrl("")
+      setImageDialogContext(null)
+    }
   }
 
   return (
@@ -485,10 +554,9 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
               <Button
                 variant="secondary"
                 onClick={() => {
-                  const url = prompt("Enter hero image URL:", heroImage)
-                  if (url) {
-                    setHeroImage(url)
-                  }
+                  setImageDialogContext({ type: 'property' })
+                  setImageDialogUrl(heroImage)
+                  setImageDialogOpen(true)
                 }}
               >
                 <ImageIcon className="mr-2 h-4 w-4" />
@@ -718,15 +786,9 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  const url = prompt("Enter room image URL:")
-                                  if (url) {
-                                    const updated = [...roomTypes]
-                                    if (!updated[idx].image_urls) {
-                                      updated[idx].image_urls = []
-                                    }
-                                    updated[idx].image_urls = [...(updated[idx].image_urls || []), url]
-                                    setRoomTypes(updated)
-                                  }
+                                  setImageDialogContext({ type: 'room', roomIndex: idx })
+                                  setImageDialogUrl("")
+                                  setImageDialogOpen(true)
                                 }}
                               >
                                 <ImageIcon className="mr-2 h-4 w-4" />
@@ -1167,10 +1229,9 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                   {isEditing && (
                     <Button
                       onClick={() => {
-                        const url = prompt("Enter image URL:")
-                        if (url) {
-                          setGalleryImages([...galleryImages, url])
-                        }
+                        setImageDialogContext({ type: 'gallery' })
+                        setImageDialogUrl("")
+                        setImageDialogOpen(true)
                       }}
                     >
                       <ImageIcon className="mr-2 h-4 w-4" />

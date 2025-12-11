@@ -21,6 +21,14 @@ import { OptimizedLink } from "@/components/optimized-link"
 import { createProperty, upsertRoomType, upsertRoomTypeImages } from "@/lib/supabase/properties"
 import { supabase } from "@/lib/supabase/client"
 import type { RoomType } from "@/lib/types/database"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function AddPropertyPage() {
   const router = useRouter()
@@ -41,6 +49,9 @@ export default function AddPropertyPage() {
   const [roomTypes, setRoomTypes] = useState<(RoomType & { image_urls?: string[] })[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [currentStep, setCurrentStep] = useState<"property" | "rooms" | "contact">("property")
+  const [imageDialogOpen, setImageDialogOpen] = useState(false)
+  const [imageDialogUrl, setImageDialogUrl] = useState("")
+  const [imageDialogContext, setImageDialogContext] = useState<{ type: 'property' | 'room'; roomIndex?: number } | null>(null)
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -406,10 +417,9 @@ export default function AddPropertyPage() {
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      const url = prompt("Enter image URL:")
-                      if (url) {
-                        setPropertyImages([...propertyImages, url])
-                      }
+                      setImageDialogContext({ type: 'property' })
+                      setImageDialogUrl("")
+                      setImageDialogOpen(true)
                     }}
                     className="w-full"
                   >
@@ -563,65 +573,53 @@ export default function AddPropertyPage() {
                     </div>
                     <div>
                       <Label>Room Images</Label>
-                      {roomType.image_urls && roomType.image_urls.length > 0 && (
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2 mb-2">
-                          {roomType.image_urls.map((imageUrl, imgIdx) => (
-                            <div key={imgIdx} className="relative h-24 w-full rounded-lg overflow-hidden group">
-                              <img
-                                src={imageUrl}
-                                alt={`${roomType.name} ${imgIdx + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                              <Button
-                                variant="destructive"
-                                size="icon"
-                                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity h-5 w-5"
-                                onClick={() => {
-                                  const updated = [...roomTypes]
-                                  updated[idx].image_urls = updated[idx].image_urls?.filter((_, i) => i !== imgIdx) || []
-                                  setRoomTypes(updated)
-                                }}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Enter image URL and press Add"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && e.currentTarget.value) {
-                              const url = e.currentTarget.value.trim()
-                              if (url) {
-                                const updated = [...roomTypes]
-                                if (!updated[idx].image_urls) {
-                                  updated[idx].image_urls = []
-                                }
-                                updated[idx].image_urls = [...(updated[idx].image_urls || []), url]
-                                setRoomTypes(updated)
-                                e.currentTarget.value = ''
-                              }
-                            }
-                          }}
-                        />
+                      <div className="mt-2 space-y-2">
+                        {roomType.image_urls && roomType.image_urls.length > 0 ? (
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {roomType.image_urls.map((imageUrl, imgIdx) => (
+                              <div key={imgIdx} className="relative h-24 w-full rounded-lg overflow-hidden group bg-muted">
+                                <img
+                                  src={imageUrl}
+                                  alt={`${roomType.name} ${imgIdx + 1}`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    console.error('Failed to load image:', imageUrl)
+                                    const target = e.target as HTMLImageElement
+                                    target.style.display = 'none'
+                                  }}
+                                />
+                                <Button
+                                  variant="destructive"
+                                  size="icon"
+                                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
+                                  onClick={() => {
+                                    const updated = [...roomTypes]
+                                    updated[idx].image_urls = updated[idx].image_urls?.filter((_, i) => i !== imgIdx) || []
+                                    setRoomTypes(updated)
+                                  }}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="h-32 w-full border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
+                            <p className="text-sm text-muted-foreground">No images added yet</p>
+                          </div>
+                        )}
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() => {
-                            const url = prompt("Enter room image URL:")
-                            if (url) {
-                              const updated = [...roomTypes]
-                              if (!updated[idx].image_urls) {
-                                updated[idx].image_urls = []
-                              }
-                              updated[idx].image_urls = [...(updated[idx].image_urls || []), url]
-                              setRoomTypes(updated)
-                            }
+                            setImageDialogContext({ type: 'room', roomIndex: idx })
+                            setImageDialogUrl("")
+                            setImageDialogOpen(true)
                           }}
+                          className="w-full"
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Room Image
                         </Button>
                       </div>
                     </div>
@@ -772,6 +770,70 @@ export default function AddPropertyPage() {
           </div>
         </form>
       </div>
+
+      {/* Image URL Dialog */}
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {imageDialogContext?.type === 'property' ? 'Add Property Image' : 'Add Room Image'}
+            </DialogTitle>
+            <DialogDescription>
+              Enter the image URL. You can use Google Drive links or any direct image URL.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder="https://drive.google.com/file/d/..."
+              value={imageDialogUrl}
+              onChange={(e) => setImageDialogUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleAddImage()
+                }
+              }}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setImageDialogOpen(false)
+                setImageDialogUrl("")
+                setImageDialogContext(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleAddImage}>
+              Add Image
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   )
+
+  function handleAddImage() {
+    if (!imageDialogUrl.trim() || !imageDialogContext) return
+
+    if (imageDialogContext.type === 'property') {
+      setPropertyImages([...propertyImages, imageDialogUrl.trim()])
+    } else if (imageDialogContext.type === 'room' && imageDialogContext.roomIndex !== undefined) {
+      const updated = [...roomTypes]
+      if (!updated[imageDialogContext.roomIndex].image_urls) {
+        updated[imageDialogContext.roomIndex].image_urls = []
+      }
+      updated[imageDialogContext.roomIndex].image_urls = [
+        ...(updated[imageDialogContext.roomIndex].image_urls || []),
+        imageDialogUrl.trim()
+      ]
+      setRoomTypes(updated)
+    }
+
+    setImageDialogOpen(false)
+    setImageDialogUrl("")
+    setImageDialogContext(null)
+  }
 }

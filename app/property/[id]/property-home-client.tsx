@@ -13,6 +13,7 @@ import { getPropertyById, getPropertyImages, getPropertyRoomTypes } from "@/lib/
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
 import { Breadcrumb } from "@/components/ui/breadcrumb"
+import { convertGoogleDriveUrl } from "@/lib/utils/convert-google-drive-url"
 import type { Property, RoomType } from "@/lib/types/database"
 
 interface PropertyHomeClientProps {
@@ -33,7 +34,7 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
           if (prop) {
             setProperty(prop)
             const propertyImages = await getPropertyImages(prop.id)
-            setImages(propertyImages.map(img => img.url))
+            setImages(propertyImages.map(img => convertGoogleDriveUrl(img.url)))
             const rooms = await getPropertyRoomTypes(prop.id)
             setRoomTypes(rooms)
           }

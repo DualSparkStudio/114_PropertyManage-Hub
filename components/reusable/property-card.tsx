@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Bed, TrendingUp, Power, PowerOff, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { updatePropertyStatus, deleteProperty } from "@/lib/supabase/properties"
+import { convertGoogleDriveUrl } from "@/lib/utils/convert-google-drive-url"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -80,7 +81,7 @@ export function PropertyCard({
       <div className="relative h-48 w-full bg-muted">
         {image ? (
           <Image
-            src={image}
+            src={convertGoogleDriveUrl(image)}
             alt={name}
             fill
             className="object-cover"

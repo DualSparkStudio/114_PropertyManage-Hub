@@ -92,7 +92,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
               const roomImages = await getRoomTypeImages(rt.id)
               return {
                 ...rt,
-                image_urls: roomImages.map(img => img.url),
+                image_urls: roomImages.map(img => convertGoogleDriveUrl(img.url)),
               }
             } catch (error: any) {
               // Fallback to single image_url if room_type_images table doesn't exist yet
@@ -100,7 +100,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
               if (error?.code === 'PGRST205' || error?.code === 'PGRST116' || error?.message?.includes('schema cache') || error?.message?.includes('does not exist')) {
                 return {
                   ...rt,
-                  image_urls: rt.image_url ? [rt.image_url] : [],
+                  image_urls: rt.image_url ? [convertGoogleDriveUrl(rt.image_url)] : [],
                 }
               }
               // Re-throw unexpected errors
@@ -122,8 +122,8 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           price: property.price,
           status: (property.status as 'active' | 'inactive') || 'active',
         })
-        setHeroImage(images[0]?.url || "")
-        setGalleryImages(images.map(img => img.url))
+        setHeroImage(images[0]?.url ? convertGoogleDriveUrl(images[0].url) : "")
+        setGalleryImages(images.map(img => convertGoogleDriveUrl(img.url)))
         setRoomTypes(roomTypesWithImages)
         setAmenities(property.amenities || [])
         setFeatures(featuresData)
@@ -667,7 +667,7 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                                 {roomType.image_urls.map((imageUrl, imgIdx) => (
                                   <div key={imgIdx} className="relative h-32 w-full rounded-lg overflow-hidden group">
                                     <Image
-                                      src={imageUrl}
+                                      src={convertGoogleDriveUrl(imageUrl)}
                                       alt={`${roomType.name} ${imgIdx + 1}`}
                                       fill
                                       className="object-cover"

@@ -10,6 +10,7 @@ import { getPropertyById, getPropertyRoomTypes, getRoomTypeImages } from "@/lib/
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
 import { Breadcrumb } from "@/components/ui/breadcrumb"
+import { convertGoogleDriveUrl } from "@/lib/utils/convert-google-drive-url"
 import type { Property, RoomType } from "@/lib/types/database"
 
 interface PropertyRoomsClientProps {
@@ -35,12 +36,12 @@ export function PropertyRoomsClient({ propertyId }: PropertyRoomsClientProps) {
                 const roomImages = await getRoomTypeImages(rt.id)
                 return {
                   ...rt,
-                  image_urls: roomImages.map(img => img.url),
+                  image_urls: roomImages.map(img => convertGoogleDriveUrl(img.url)),
                 }
               } catch {
                 return {
                   ...rt,
-                  image_urls: rt.image_url ? [rt.image_url] : [],
+                  image_urls: rt.image_url ? [convertGoogleDriveUrl(rt.image_url)] : [],
                 }
               }
             })
@@ -113,8 +114,8 @@ export function PropertyRoomsClient({ propertyId }: PropertyRoomsClientProps) {
           <div className="space-y-6">
             {roomTypes.map((room) => {
               const roomImage = room.image_urls && room.image_urls.length > 0 
-                ? room.image_urls[0] 
-                : room.image_url || "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"
+                ? convertGoogleDriveUrl(room.image_urls[0])
+                : room.image_url ? convertGoogleDriveUrl(room.image_url) : "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"
               
               return (
                 <Card key={room.id}>

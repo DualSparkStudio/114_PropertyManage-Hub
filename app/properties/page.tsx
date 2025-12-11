@@ -17,6 +17,7 @@ import {
 import { Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { getAllProperties, getPropertyImages, getPropertyRoomTypes } from "@/lib/supabase/properties"
+import { convertGoogleDriveUrl } from "@/lib/utils/convert-google-drive-url"
 import { calculateOccupancy } from "@/lib/supabase/bookings"
 import { supabase } from "@/lib/supabase/client"
 
@@ -60,7 +61,7 @@ export default function PropertiesPage() {
             location: property.location,
             rooms: actualTotalRooms,
             occupancy,
-            image: images[0]?.url || '',
+            image: images[0]?.url ? convertGoogleDriveUrl(images[0].url) : '',
             status: property.status || 'active',
           }
         })

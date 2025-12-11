@@ -21,13 +21,31 @@ import {
 import type { PropertyContact } from "@/lib/types/database"
 import type { Property } from "@/lib/types/database"
 
+// Google Maps embed component
+function MapEmbed({ address }: { address: string }) {
+  const encodedAddress = encodeURIComponent(address)
+  return (
+    <div className="w-full h-64 rounded-lg overflow-hidden">
+      <iframe
+        width="100%"
+        height="100%"
+        style={{ border: 0 }}
+        loading="lazy"
+        allowFullScreen
+        referrerPolicy="no-referrer-when-downgrade"
+        src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBFw0Qbyq9zTFTd-tUY6d_s6U4ZYZjT9k8'}&q=${encodedAddress}`}
+      />
+    </div>
+  )
+}
+
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     message: "",
-    property_id: "",
+    property_id: "none",
   })
   const [contactData, setContactData] = useState<(PropertyContact & { property_name?: string })[]>([])
   const [properties, setProperties] = useState<Property[]>([])
@@ -41,8 +59,14 @@ export default function ContactPage() {
         setProperties(propertiesData)
         
         const contactPromises = propertiesData.map(async (property) => {
-          const contact = await getPropertyContact(property.id)
-          return contact ? { ...contact, property_name: property.name } : null
+          try {
+            const contact = await getPropertyContact(property.id)
+            return contact ? { ...contact, property_name: property.name } : null
+          } catch (error) {
+            // Silently handle 406 errors (RLS policy issues) or other errors
+            console.warn(`Could not fetch contact for property ${property.id}:`, error)
+            return null
+          }
         })
         const contactResults = await Promise.all(contactPromises)
         const validContact = contactResults.filter((c): c is PropertyContact & { property_name: string } => c !== null)
@@ -64,7 +88,7 @@ export default function ContactPage() {
       const { error } = await supabase
         .from('contact_messages')
         .insert({
-          property_id: formData.property_id || null,
+          property_id: formData.property_id && formData.property_id !== "none" ? formData.property_id : null,
           name: formData.name,
           email: formData.email,
           phone: formData.phone || null,
@@ -76,7 +100,7 @@ export default function ContactPage() {
         alert("Failed to send message. Please try again.")
       } else {
         alert("Thank you for your message! We'll get back to you soon.")
-        setFormData({ name: "", email: "", phone: "", message: "", property_id: "" })
+        setFormData({ name: "", email: "", phone: "", message: "", property_id: "none" })
       }
     } catch (error) {
       console.error("Error submitting message:", error)
@@ -138,7 +162,7 @@ export default function ContactPage() {
                       <SelectValue placeholder="Select a property (optional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {properties.map((property) => (
                         <SelectItem key={property.id} value={property.id}>
                           {property.name}
@@ -163,62 +187,76 @@ export default function ContactPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {loading ? (
-                <p className="text-muted-foreground">Loading contact information...</p>
-              ) : contactData.length === 0 ? (
-                <p className="text-muted-foreground">No contact information available at this time.</p>
-              ) : (
-                contactData.map((contact, idx) => (
-                  <div key={`${contact.property_id}-${idx}`} className="space-y-4 pb-4 border-b last:border-0 last:pb-0">
-                    {contact.property_name && (
-                      <h3 className="font-semibold">{contact.property_name}</h3>
-                    )}
-                    {contact.phone && (
-                      <div className="flex items-center gap-4">
-                        <Phone className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Phone</p>
-                          <p className="font-medium">{contact.phone}</p>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Contact Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {loading ? (
+                  <p className="text-muted-foreground">Loading contact information...</p>
+                ) : contactData.length === 0 ? (
+                  <p className="text-muted-foreground">No contact information available at this time.</p>
+                ) : (
+                  contactData.map((contact, idx) => (
+                    <div key={`${contact.property_id}-${idx}`} className="space-y-4 pb-4 border-b last:border-0 last:pb-0">
+                      {contact.property_name && (
+                        <h3 className="font-semibold">{contact.property_name}</h3>
+                      )}
+                      {contact.phone && (
+                        <div className="flex items-center gap-4">
+                          <Phone className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Phone</p>
+                            <p className="font-medium">{contact.phone}</p>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {contact.email && (
-                      <div className="flex items-center gap-4">
-                        <Mail className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Email</p>
-                          <p className="font-medium">{contact.email}</p>
+                      )}
+                      {contact.email && (
+                        <div className="flex items-center gap-4">
+                          <Mail className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Email</p>
+                            <p className="font-medium">{contact.email}</p>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {contact.address && (
-                      <div className="flex items-center gap-4">
-                        <MapPin className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Address</p>
-                          <p className="font-medium">{contact.address}</p>
+                      )}
+                      {contact.address && (
+                        <div className="flex items-center gap-4">
+                          <MapPin className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Address</p>
+                            <p className="font-medium">{contact.address}</p>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {contact.hours && (
-                      <div className="flex items-center gap-4">
-                        <Calendar className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm text-muted-foreground">Hours</p>
-                          <p className="font-medium whitespace-pre-line">{contact.hours}</p>
+                      )}
+                      {contact.hours && (
+                        <div className="flex items-center gap-4">
+                          <Calendar className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Hours</p>
+                            <p className="font-medium whitespace-pre-line">{contact.hours}</p>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
+                      )}
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Map Section */}
+            {contactData.length > 0 && contactData[0].address && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Location</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <MapEmbed address={contactData[0].address!} />
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
 

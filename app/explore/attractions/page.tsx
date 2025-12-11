@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Mountain, MapPin } from "lucide-react"
@@ -64,22 +65,31 @@ export default function AttractionsPage() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {allAttractions.map((attraction, idx) => (
-              <Card key={`${attraction.property_id}-${attraction.name}-${idx}`}>
+              <Card key={`${attraction.property_id}-${attraction.name}-${idx}`} className="overflow-hidden">
+                {attraction.image_url ? (
+                  <div className="relative h-48 w-full">
+                    <Image
+                      src={attraction.image_url}
+                      alt={attraction.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-48 w-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <Mountain className="h-16 w-16 text-primary/50" />
+                  </div>
+                )}
                 <CardHeader>
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Mountain className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-lg">{attraction.name}</CardTitle>
-                        {attraction.distance && (
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                            <MapPin className="h-3 w-3" />
-                            <span>{attraction.distance} away</span>
-                          </div>
-                        )}
-                      </div>
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg">{attraction.name}</CardTitle>
+                      {attraction.distance && (
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                          <MapPin className="h-3 w-3" />
+                          <span>{attraction.distance} away</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   {attraction.property_name && (

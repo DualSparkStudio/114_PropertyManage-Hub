@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
-import { getAllProperties, getPropertyAbout } from "@/lib/supabase/properties"
+import { getAllProperties, getPropertyAbout, getPropertyImages } from "@/lib/supabase/properties"
 import type { PropertyAbout } from "@/lib/types/database"
 
 interface PropertyAboutWithName extends PropertyAbout {
   property_name: string
+  property_image?: string
 }
 
 export default function AboutPage() {
@@ -22,7 +24,13 @@ export default function AboutPage() {
         const properties = await getAllProperties()
         const aboutPromises = properties.map(async (property) => {
           const about = await getPropertyAbout(property.id)
-          return about ? { ...about, property_name: property.name } : null
+          if (!about) return null
+          const images = await getPropertyImages(property.id)
+          return { 
+            ...about, 
+            property_name: property.name,
+            property_image: images[0]?.url || null
+          }
         })
         const aboutResults = await Promise.all(aboutPromises)
         const validAbout = aboutResults.filter((a): a is PropertyAboutWithName => a !== null)
@@ -69,7 +77,17 @@ export default function AboutPage() {
         ) : (
           <div className="space-y-6">
             {aboutData.map((about, idx) => (
-              <Card key={`${about.property_id}-${idx}`}>
+              <Card key={`${about.property_id}-${idx}`} className="overflow-hidden">
+                {about.property_image && (
+                  <div className="relative h-64 w-full">
+                    <Image
+                      src={about.property_image}
+                      alt={about.property_name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )}
                 <CardHeader>
                   <CardTitle>{about.property_name || "About"}</CardTitle>
                 </CardHeader>

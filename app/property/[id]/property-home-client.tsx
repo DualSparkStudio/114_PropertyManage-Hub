@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,14 +19,10 @@ interface PropertyHomeClientProps {
 }
 
 export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
-  const router = useRouter()
   const [property, setProperty] = useState<Property | null>(null)
   const [images, setImages] = useState<string[]>([])
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
   const [loading, setLoading] = useState(true)
-  const [checkIn, setCheckIn] = useState("")
-  const [checkOut, setCheckOut] = useState("")
-  const [guests, setGuests] = useState(2)
 
   useEffect(() => {
     async function fetchProperty() {
@@ -57,14 +52,6 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
     ? Math.max(...roomTypes.map(rt => rt.max_guests || 0))
     : 0
 
-  const handleBookNow = () => {
-    if (!checkIn || !checkOut) {
-      alert("Please select check-in and check-out dates")
-      return
-    }
-    router.push(`/checkout?property=${propertyId}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`)
-  }
-
   const handleShare = async () => {
     if (!property) return
     const url = window.location.href
@@ -87,10 +74,6 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
     }
   }
 
-  const nights = checkIn && checkOut 
-    ? Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24))
-    : 0
-  const totalPrice = property ? nights * Number(property.price) : 0
 
   if (loading) {
     return (
@@ -189,7 +172,7 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
                   <div className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="text-sm font-medium">Up to {maxGuests || guests} guests</p>
+                      <p className="text-sm font-medium">Up to {maxGuests || 0} guests</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -226,72 +209,33 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
             )}
           </div>
 
-          {/* Booking Card */}
+          {/* Quick Actions Card */}
           <div className="lg:col-span-1">
             <Card className="sticky top-32">
               <CardHeader>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <span className="text-3xl font-bold">₹{property.price}</span>
-                    <span className="text-muted-foreground">/night</span>
-                  </div>
-                  <Badge variant="secondary">{property.type}</Badge>
-                </div>
+                <CardTitle>Explore Rooms</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="checkin">Check-in</Label>
-                    <Input
-                      id="checkin"
-                      type="date"
-                      value={checkIn}
-                      onChange={(e) => setCheckIn(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="checkout">Check-out</Label>
-                    <Input
-                      id="checkout"
-                      type="date"
-                      value={checkOut}
-                      onChange={(e) => setCheckOut(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="guests">Guests</Label>
-                  <Input
-                    id="guests"
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={guests}
-                    onChange={(e) => setGuests(Number(e.target.value))}
-                  />
-                </div>
-                {nights > 0 && (
-                  <div className="space-y-2 pt-4 border-t">
-                    <div className="flex justify-between text-sm">
-                      <span>₹{property.price} x {nights} nights</span>
-                      <span>₹{totalPrice}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Service fee</span>
-                      <span>₹{Math.round(totalPrice * 0.1)}</span>
-                    </div>
-                    <div className="flex justify-between font-bold pt-2 border-t">
-                      <span>Total</span>
-                      <span>₹{totalPrice + Math.round(totalPrice * 0.1)}</span>
-                    </div>
-                  </div>
-                )}
-                <Button className="w-full" size="lg" onClick={handleBookNow}>
-                  Book Now
-                </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  You won&apos;t be charged yet
+                <p className="text-sm text-muted-foreground">
+                  Browse our available rooms and find the perfect accommodation for your stay.
                 </p>
+                <Button asChild className="w-full" size="lg">
+                  <Link href={`/property/${propertyId}/rooms`}>
+                    View All Rooms
+                  </Link>
+                </Button>
+                <div className="pt-4 border-t space-y-2">
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href={`/property/${propertyId}/attractions`}>
+                      Nearby Attractions
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href={`/property/${propertyId}/features`}>
+                      Property Features
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

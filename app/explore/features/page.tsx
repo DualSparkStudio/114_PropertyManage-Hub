@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { getAllFeatures } from "@/lib/supabase/properties"
@@ -72,9 +73,19 @@ export default function FeaturesPage() {
               const key = `${feature.name}-${feature.icon}`
               const count = featureCounts[key] || 1
               return (
-                <Card key={`${feature.property_id}-${key}-${idx}`}>
+                <Card key={`${feature.property_id}-${key}-${idx}`} className="overflow-hidden">
+                  <div className="relative h-48 w-full bg-gradient-to-br from-primary/20 to-primary/5">
+                    {feature.icon ? (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-6xl">{feature.icon}</div>
+                      </div>
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-6xl text-primary/30">✨</div>
+                      </div>
+                    )}
+                  </div>
                   <CardContent className="p-6 text-center">
-                    {feature.icon && <div className="text-5xl mb-4">{feature.icon}</div>}
                     <h3 className="font-semibold mb-2">{feature.name}</h3>
                     <p className="text-sm text-muted-foreground mb-3">{feature.description || "No description available."}</p>
                     {count > 1 && (

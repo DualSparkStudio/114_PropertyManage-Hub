@@ -62,11 +62,7 @@ const PropertyCard = memo(function PropertyCard({ property }: { property: any })
         <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
           {property.description}
         </p>
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-2xl font-bold">₹{property.price}</span>
-            <span className="text-sm text-muted-foreground">/night</span>
-          </div>
+        <div className="flex items-center justify-end">
           <span className="text-sm text-muted-foreground">
             {property.reviews} reviews
           </span>
@@ -95,6 +91,12 @@ export default function ExplorePage() {
   const [allLocations, setAllLocations] = useState<string[]>([])
   const [allTypes, setAllTypes] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+
+  const resetSearch = () => {
+    setSearchQuery("")
+    setLocationFilter("all")
+    setTypeFilter("all")
+  }
   
   useEffect(() => {
     async function fetchProperties() {
@@ -165,11 +167,23 @@ export default function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar variant="explore" />
+      <Navbar variant="explore" onLogoClick={resetSearch} />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary/10 to-primary/5 py-8 md:py-16">
-        <div className="container mx-auto px-4 md:px-6">
+      <section className="relative py-8 md:py-16 overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <div className="relative h-full w-full">
+            <Image
+              src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&q=80"
+              alt="Luxury hotel"
+              fill
+              className="object-cover opacity-30"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10" />
+          </div>
+        </div>
+        <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="text-center mb-6 md:mb-8">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
               Find Your Perfect Stay

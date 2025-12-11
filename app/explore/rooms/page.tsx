@@ -1,11 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Bed, Users, Square, MapPin } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Bed, Users, Square, MapPin, Search } from "lucide-react"
 import { getAllRoomTypes, getRoomTypeImages } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
@@ -15,6 +17,8 @@ import type { RoomType } from "@/lib/types/database"
 export default function RoomsPage() {
   const [allRooms, setAllRooms] = useState<(RoomType & { property_name?: string; property_id?: string; property_location?: string; image_urls?: string[] })[]>([])
   const [loading, setLoading] = useState(true)
+  const [checkIn, setCheckIn] = useState("")
+  const [checkOut, setCheckOut] = useState("")
 
   useEffect(() => {
     async function fetchRooms() {
@@ -47,6 +51,16 @@ export default function RoomsPage() {
     fetchRooms()
   }, [])
 
+  // Filter rooms based on check-in/check-out dates
+  const filteredRooms = useMemo(() => {
+    if (!checkIn || !checkOut) {
+      return allRooms
+    }
+    // For now, just return all rooms - in a real app, you'd check availability
+    // This is a placeholder for the search functionality
+    return allRooms
+  }, [allRooms, checkIn, checkOut])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -71,13 +85,52 @@ export default function RoomsPage() {
           <p className="text-muted-foreground">Choose from our selection of luxurious accommodations across all properties</p>
         </div>
 
+        {/* Search Bar */}
+        <Card className="mb-8 p-4 md:p-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <Label htmlFor="checkin">Check-in Date</Label>
+              <Input
+                id="checkin"
+                type="date"
+                value={checkIn}
+                onChange={(e) => setCheckIn(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div className="flex-1">
+              <Label htmlFor="checkout">Check-out Date</Label>
+              <Input
+                id="checkout"
+                type="date"
+                value={checkOut}
+                onChange={(e) => setCheckOut(e.target.value)}
+                className="mt-1"
+                min={checkIn || undefined}
+              />
+            </div>
+            <div className="flex items-end">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setCheckIn("")
+                  setCheckOut("")
+                }}
+                className="w-full md:w-auto"
+              >
+                Clear
+              </Button>
+            </div>
+          </div>
+        </Card>
+
         {allRooms.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No rooms available at this time.</p>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {allRooms
+            {filteredRooms
               .filter((room) => {
                 const roomImage = room.image_urls && room.image_urls.length > 0 
                   ? room.image_urls[0] 

@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 interface NavbarProps {
   variant?: "explore" | "property"
   propertyId?: string
+  onLogoClick?: () => void
 }
 
 // Icon mapping for nav items
@@ -29,7 +30,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Phone,
 }
 
-export function Navbar({ variant = "explore", propertyId }: NavbarProps) {
+export function Navbar({ variant = "explore", propertyId, onLogoClick }: NavbarProps) {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -179,6 +180,7 @@ export function Navbar({ variant = "explore", propertyId }: NavbarProps) {
           <div className="flex items-center justify-between">
             <OptimizedLink 
               href="/explore"
+              onClick={onLogoClick}
               className="text-xl md:text-2xl font-bold text-primary hover:opacity-80 transition-opacity"
             >
               PropertyManage

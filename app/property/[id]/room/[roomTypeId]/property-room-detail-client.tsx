@@ -353,7 +353,7 @@ export function PropertyRoomDetailClient({ propertyId, roomTypeId }: PropertyRoo
                   <p className="text-muted-foreground mb-4">{roomType.description}</p>
                 )}
                 <p className="text-muted-foreground">
-                  Experience the perfect blend of luxury and comfort in this beautifully appointed room. Every detail has been carefully curated to ensure your stay is nothing short of exceptional. From the premium bedding to the state-of-the-art amenities, you'll find everything you need for a memorable vacation.
+                  Experience the perfect blend of luxury and comfort in this beautifully appointed room. Every detail has been carefully curated to ensure your stay is nothing short of exceptional. From the premium bedding to the state-of-the-art amenities, you&apos;ll find everything you need for a memorable vacation.
                 </p>
               </div>
             </div>

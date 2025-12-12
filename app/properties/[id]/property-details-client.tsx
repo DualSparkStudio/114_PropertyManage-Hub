@@ -134,20 +134,38 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           roomTypesData.map(async (rt) => {
             try {
               const roomImages = await getRoomTypeImages(rt.id)
+              // If we have images from room_type_images table, use them
+              if (roomImages && roomImages.length > 0) {
+                const convertedImages = roomImages.map(img => convertGoogleDriveUrl(img.url))
+                console.log(`Room type ${rt.id} (${rt.name}): Found ${roomImages.length} images from room_type_images table`)
+                return {
+                  ...rt,
+                  image_urls: convertedImages,
+                }
+              }
+              // Otherwise, fallback to single image_url field
+              const fallbackImages = rt.image_url ? [convertGoogleDriveUrl(rt.image_url)] : []
+              if (fallbackImages.length > 0) {
+                console.log(`Room type ${rt.id} (${rt.name}): Using fallback image_url field`)
+              } else {
+                console.log(`Room type ${rt.id} (${rt.name}): No images found`)
+              }
               return {
                 ...rt,
-                image_urls: roomImages.map(img => convertGoogleDriveUrl(img.url)),
+                image_urls: fallbackImages,
               }
             } catch (error: any) {
               // Fallback to single image_url if room_type_images table doesn't exist yet
               // Handle PGRST205 (table not found) and other expected errors silently
               if (error?.code === 'PGRST205' || error?.code === 'PGRST116' || error?.message?.includes('schema cache') || error?.message?.includes('does not exist')) {
+                console.log(`Room type ${rt.id} (${rt.name}): room_type_images table not found, using image_url field`)
                 return {
                   ...rt,
                   image_urls: rt.image_url ? [convertGoogleDriveUrl(rt.image_url)] : [],
                 }
               }
               // Re-throw unexpected errors
+              console.error(`Error fetching images for room type ${rt.id}:`, error)
               throw error
             }
           })

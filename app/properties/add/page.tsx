@@ -29,6 +29,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function AddPropertyPage() {
   const router = useRouter()
@@ -52,6 +61,8 @@ export default function AddPropertyPage() {
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [imageDialogUrl, setImageDialogUrl] = useState("")
   const [imageDialogContext, setImageDialogContext] = useState<{ type: 'property' | 'room'; roomIndex?: number } | null>(null)
+  const [notificationDialogOpen, setNotificationDialogOpen] = useState(false)
+  const [notificationMessage, setNotificationMessage] = useState("")
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -253,11 +264,15 @@ export default function AddPropertyPage() {
         }
       }
 
-      alert("Property created successfully!")
-      router.push("/properties")
+      setNotificationMessage("Property created successfully!")
+      setNotificationDialogOpen(true)
+      setTimeout(() => {
+        router.push("/properties")
+      }, 1500)
     } catch (error: any) {
       console.error("Error creating property:", error)
-      alert(error.message || "Failed to create property. Please check the console for details.")
+      setNotificationMessage(error.message || "Failed to create property. Please check the console for details.")
+      setNotificationDialogOpen(true)
       setIsSubmitting(false)
     }
   }
@@ -812,14 +827,35 @@ export default function AddPropertyPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Notification Dialog */}
+      <AlertDialog open={notificationDialogOpen} onOpenChange={setNotificationDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Notification</AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-line">
+              {notificationMessage}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setNotificationDialogOpen(false)}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   )
 
   function handleAddImage() {
     if (!imageDialogUrl.trim() || !imageDialogContext) return
 
+    const trimmedUrl = imageDialogUrl.trim()
+
     if (imageDialogContext.type === 'property') {
-      setPropertyImages([...propertyImages, imageDialogUrl.trim()])
+      setPropertyImages([...propertyImages, trimmedUrl])
+      setNotificationMessage("Image URL added successfully! It may take 5-10 seconds for the image to be reflected. Please make sure to fill all fields before saving.")
+      setNotificationDialogOpen(true)
     } else if (imageDialogContext.type === 'room' && imageDialogContext.roomIndex !== undefined) {
       const updated = [...roomTypes]
       if (!updated[imageDialogContext.roomIndex].image_urls) {
@@ -827,9 +863,11 @@ export default function AddPropertyPage() {
       }
       updated[imageDialogContext.roomIndex].image_urls = [
         ...(updated[imageDialogContext.roomIndex].image_urls || []),
-        imageDialogUrl.trim()
+        trimmedUrl
       ]
       setRoomTypes(updated)
+      setNotificationMessage("Image URL added successfully! It may take 5-10 seconds for the image to be reflected. Please make sure to fill all fields before saving.")
+      setNotificationDialogOpen(true)
     }
 
     setImageDialogOpen(false)

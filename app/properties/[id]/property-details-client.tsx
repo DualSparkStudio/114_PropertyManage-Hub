@@ -41,6 +41,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface PropertyDetailsClientProps {
   propertyId: string
@@ -53,6 +63,10 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [imageDialogUrl, setImageDialogUrl] = useState("")
   const [imageDialogContext, setImageDialogContext] = useState<{ type: 'property' | 'room' | 'gallery'; roomIndex?: number } | null>(null)
+  const [notificationDialogOpen, setNotificationDialogOpen] = useState(false)
+  const [notificationMessage, setNotificationMessage] = useState("")
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [roomTypeToDelete, setRoomTypeToDelete] = useState<{ index: number; id: string } | null>(null)
   const [propertyData, setPropertyData] = useState({
     id: "",
     name: "",
@@ -305,14 +319,18 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         }
       }
       
-      // Update room types
+      // Update room types - preserve IDs for existing room types
       for (const roomType of roomTypes) {
         // Save room type (without image_urls, that's handled separately)
         const { image_urls, ...roomTypeData } = roomType
-        const savedRoomType = await upsertRoomType({
+        // Explicitly include the ID if it exists and is not a temporary ID
+        const roomTypeToSave = {
           ...roomTypeData,
           property_id: propertyData.id,
-        })
+          // Preserve the ID if it's a real database ID (not a temporary 'new-' ID)
+          ...(roomType.id && !roomType.id.startsWith('new-') ? { id: roomType.id } : {}),
+        }
+        const savedRoomType = await upsertRoomType(roomTypeToSave)
         
         // Save room type images
         if (image_urls && image_urls.length > 0) {
@@ -368,14 +386,18 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         }
       }
       
-      alert("Property updated successfully!")
+      setNotificationMessage("Property updated successfully!")
+      setNotificationDialogOpen(true)
       setIsEditing(false)
       
       // Reload property data to get updated room types with new IDs
-      window.location.reload()
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
     } catch (error: any) {
       console.error("Error updating property:", error)
-      alert(error.message || "Failed to update property. Please check the console for details.")
+      setNotificationMessage(error.message || "Failed to update property. Please check the console for details.")
+      setNotificationDialogOpen(true)
     } finally {
       setLoading(false)
     }
@@ -391,10 +413,12 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
       const newStatus = propertyData.status === 'active' ? 'inactive' : 'active'
       await updatePropertyStatus(propertyData.id, newStatus)
       setPropertyData({ ...propertyData, status: newStatus })
-      alert(`Property ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`)
+      setNotificationMessage(`Property ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`)
+      setNotificationDialogOpen(true)
     } catch (error: any) {
       console.error('Error updating property status:', error)
-      alert('Failed to update property status')
+      setNotificationMessage('Failed to update property status')
+      setNotificationDialogOpen(true)
     }
   }
 
@@ -416,8 +440,14 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         trimmedUrl
       ]
       setRoomTypes(updated)
+      
+      // Show notification for room images
+      setNotificationMessage("Image URL added successfully! It may take 5-10 seconds for the image to be reflected. Please make sure to fill all fields before saving.")
+      setNotificationDialogOpen(true)
     } else if (imageDialogContext.type === 'gallery') {
       setGalleryImages([...galleryImages, trimmedUrl])
+      setNotificationMessage("Image URL added successfully! It may take 5-10 seconds for the image to be reflected.")
+      setNotificationDialogOpen(true)
     } else if (imageDialogContext.type === 'property') {
       setHeroImage(trimmedUrl)
       // Update galleryImages[0] to match heroImage to keep them in sync
@@ -429,6 +459,8 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
         // If no gallery images, create one with the hero image
         setGalleryImages([trimmedUrl])
       }
+      setNotificationMessage("Image URL added successfully! It may take 5-10 seconds for the image to be reflected.")
+      setNotificationDialogOpen(true)
     }
 
     setImageDialogOpen(false)
@@ -706,15 +738,9 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                             <Button
                               variant="destructive"
                               size="sm"
-                              onClick={async () => {
-                                if (!roomType.id.startsWith('new-')) {
-                                  try {
-                                    await deleteRoomType(roomType.id)
-                                  } catch (error) {
-                                    console.error('Error deleting room type:', error)
-                                  }
-                                }
-                                setRoomTypes(roomTypes.filter((_, i) => i !== idx))
+                              onClick={() => {
+                                setRoomTypeToDelete({ index: idx, id: roomType.id })
+                                setDeleteConfirmOpen(true)
                               }}
                             >
                               <X className="h-4 w-4" />
@@ -915,13 +941,17 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                             onClick={async () => {
                               setLoading(true)
                               try {
-                                // Update room types
+                                // Update room types - preserve IDs for existing room types
                                 for (const roomType of roomTypes) {
                                   const { image_urls, ...roomTypeData } = roomType
-                                  const savedRoomType = await upsertRoomType({
+                                  // Explicitly include the ID if it exists and is not a temporary ID
+                                  const roomTypeToSave = {
                                     ...roomTypeData,
                                     property_id: propertyData.id,
-                                  })
+                                    // Preserve the ID if it's a real database ID (not a temporary 'new-' ID)
+                                    ...(roomType.id && !roomType.id.startsWith('new-') ? { id: roomType.id } : {}),
+                                  }
+                                  const savedRoomType = await upsertRoomType(roomTypeToSave)
                                   
                                   if (image_urls && image_urls.length > 0) {
                                     try {
@@ -943,12 +973,16 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
                                     }
                                   }
                                 }
-                                alert("Room types updated successfully!")
+                                setNotificationMessage("Room types updated successfully!")
+                                setNotificationDialogOpen(true)
                                 setIsEditingRooms(false)
-                                window.location.reload()
+                                setTimeout(() => {
+                                  window.location.reload()
+                                }, 1500)
                               } catch (error: any) {
                                 console.error("Error updating room types:", error)
-                                alert(error.message || "Failed to update room types.")
+                                setNotificationMessage(error.message || "Failed to update room types.")
+                                setNotificationDialogOpen(true)
                               } finally {
                                 setLoading(false)
                               }
@@ -1396,6 +1430,70 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Notification Dialog */}
+      <AlertDialog open={notificationDialogOpen} onOpenChange={setNotificationDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Notification</AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-line">
+              {notificationMessage}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setNotificationDialogOpen(false)}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Room Type</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this room type? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setDeleteConfirmOpen(false)
+              setRoomTypeToDelete(null)
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (roomTypeToDelete) {
+                  const { index, id } = roomTypeToDelete
+                  if (!id.startsWith('new-')) {
+                    try {
+                      await deleteRoomType(id)
+                    } catch (error) {
+                      console.error('Error deleting room type:', error)
+                      setNotificationMessage('Failed to delete room type. Please try again.')
+                      setNotificationDialogOpen(true)
+                      setDeleteConfirmOpen(false)
+                      setRoomTypeToDelete(null)
+                      return
+                    }
+                  }
+                  setRoomTypes(roomTypes.filter((_, i) => i !== index))
+                  setNotificationMessage('Room type deleted successfully!')
+                  setNotificationDialogOpen(true)
+                }
+                setDeleteConfirmOpen(false)
+                setRoomTypeToDelete(null)
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   )
 }

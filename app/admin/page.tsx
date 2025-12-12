@@ -22,8 +22,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { RevenueChart } from "@/components/reusable/revenue-chart"
-import { BookingSourceChart } from "@/components/reusable/booking-source-chart"
 import { getAllProperties } from "@/lib/supabase/properties"
 import { getAllBookings, getBookingsWithDetails, calculateOccupancy } from "@/lib/supabase/bookings"
 import { supabase } from "@/lib/supabase/client"
@@ -31,6 +29,7 @@ import { format } from "date-fns"
 
 interface DashboardStats {
   totalProperties: number
+  totalRooms: number
   bookingsToday: number
   occupancyRate: number
   monthlyRevenue: number
@@ -45,6 +44,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<DashboardStats>({
     totalProperties: 0,
+    totalRooms: 0,
     bookingsToday: 0,
     occupancyRate: 0,
     monthlyRevenue: 0,
@@ -145,6 +145,7 @@ export default function AdminDashboardPage() {
 
         setStats({
           totalProperties,
+          totalRooms,
           bookingsToday,
           occupancyRate,
           monthlyRevenue,
@@ -155,19 +156,23 @@ export default function AdminDashboardPage() {
           revenueChange,
         })
 
-        // Get recent bookings (last 10)
-        const recent = bookingsWithDetails
-          .slice(0, 10)
-          .map((booking: any) => ({
-            id: booking.id,
-            guest: booking.guest_name || 'Guest',
-            property: booking.property?.name || 'Unknown Property',
-            checkIn: booking.check_in,
-            checkOut: booking.check_out,
-            status: booking.status,
-            source: booking.source || 'Manual',
-          }))
-        setRecentBookings(recent)
+        // Get recent bookings (last 10) - only if there are bookings
+        if (allBookings.length > 0) {
+          const recent = bookingsWithDetails
+            .slice(0, 10)
+            .map((booking: any) => ({
+              id: booking.id,
+              guest: booking.guest_name || 'Guest',
+              property: booking.property?.name || 'Unknown Property',
+              checkIn: booking.check_in,
+              checkOut: booking.check_out,
+              status: booking.status,
+              source: booking.source || 'Manual',
+            }))
+          setRecentBookings(recent)
+        } else {
+          setRecentBookings([])
+        }
 
         // Get upcoming check-ins (next 7 days)
         const upcoming = bookingsWithDetails
@@ -252,7 +257,7 @@ export default function AdminDashboardPage() {
             title="Total Properties"
             value={stats.totalProperties}
             icon={Building2}
-            change={`${stats.totalProperties} total`}
+            change={`${stats.totalProperties} properties, ${stats.totalRooms} rooms`}
           />
           <StatsCard
             title="Bookings Today"
@@ -291,26 +296,6 @@ export default function AdminDashboardPage() {
           />
         </div>
 
-        {/* Charts */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Monthly Revenue</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RevenueChart />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Booking Sources</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <BookingSourceChart />
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Recent Bookings */}
         <Card>
           <CardHeader>
@@ -320,12 +305,11 @@ export default function AdminDashboardPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Guest</TableHead>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Check-in</TableHead>
-                  <TableHead>Check-out</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Source</TableHead>
+                    <TableHead>Guest</TableHead>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Check-in</TableHead>
+                    <TableHead>Check-out</TableHead>
+                    <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -349,12 +333,11 @@ export default function AdminDashboardPage() {
                           {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                         </Badge>
                       </TableCell>
-                      <TableCell>{booking.source}</TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                       No bookings found
                     </TableCell>
                   </TableRow>

@@ -55,21 +55,22 @@ const menuItems = [
     icon: DoorOpen,
     href: "/rooms",
   },
-  {
-    title: "Finance",
-    icon: DollarSign,
-    href: "/finance",
-  },
-  {
-    title: "Staff",
-    icon: Users,
-    href: "/staff",
-  },
-  {
-    title: "Reports",
-    icon: FileText,
-    href: "/reports",
-  },
+  // Finance, Staff, and Reports pages are still available but hidden from sidebar
+  // {
+  //   title: "Finance",
+  //   icon: DollarSign,
+  //   href: "/finance",
+  // },
+  // {
+  //   title: "Staff",
+  //   icon: Users,
+  //   href: "/staff",
+  // },
+  // {
+  //   title: "Reports",
+  //   icon: FileText,
+  //   href: "/reports",
+  // },
   {
     title: "Settings",
     icon: Settings,

@@ -31,10 +31,16 @@ import type { BookingWithDetails } from "@/lib/types/database"
 import type { Property } from "@/lib/types/database"
 
 export default function BookingsPage() {
+  const [allBookings, setAllBookings] = useState<BookingWithDetails[]>([])
   const [bookings, setBookings] = useState<BookingWithDetails[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedBooking, setSelectedBooking] = useState<BookingWithDetails | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [propertyFilter, setPropertyFilter] = useState<string>("all")
+  const [checkInFilter, setCheckInFilter] = useState<string>("")
+  const [checkOutFilter, setCheckOutFilter] = useState<string>("")
 
   useEffect(() => {
     async function fetchData() {
@@ -43,6 +49,7 @@ export default function BookingsPage() {
           getBookingsWithDetails(),
           getAllProperties(),
         ])
+        setAllBookings(bookingsData)
         setBookings(bookingsData)
         setProperties(propertiesData)
       } catch (error) {
@@ -53,6 +60,41 @@ export default function BookingsPage() {
     }
     fetchData()
   }, [])
+
+  useEffect(() => {
+    let filtered = [...allBookings]
+
+    // Search filter
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (b) =>
+          b.guest_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (b.property as any)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+
+    // Status filter
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((b) => b.status === statusFilter)
+    }
+
+    // Property filter
+    if (propertyFilter !== "all") {
+      filtered = filtered.filter((b) => b.property_id === propertyFilter)
+    }
+
+    // Check-in filter
+    if (checkInFilter) {
+      filtered = filtered.filter((b) => b.check_in >= checkInFilter)
+    }
+
+    // Check-out filter
+    if (checkOutFilter) {
+      filtered = filtered.filter((b) => b.check_out <= checkOutFilter)
+    }
+
+    setBookings(filtered)
+  }, [searchQuery, statusFilter, propertyFilter, checkInFilter, checkOutFilter, allBookings])
   return (
     <MainLayout>
       <div className="mb-4">
@@ -73,11 +115,27 @@ export default function BookingsPage() {
         <Card className="p-4">
           <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-4">
             <div className="flex-1 min-w-[200px]">
-              <Input placeholder="Search bookings..." />
+              <Input 
+                placeholder="Search bookings..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <Input type="date" className="w-full sm:w-[180px]" placeholder="Check-in" />
-            <Input type="date" className="w-full sm:w-[180px]" placeholder="Check-out" />
-            <Select>
+            <Input 
+              type="date" 
+              className="w-full sm:w-[180px]" 
+              placeholder="Check-in"
+              value={checkInFilter}
+              onChange={(e) => setCheckInFilter(e.target.value)}
+            />
+            <Input 
+              type="date" 
+              className="w-full sm:w-[180px]" 
+              placeholder="Check-out"
+              value={checkOutFilter}
+              onChange={(e) => setCheckOutFilter(e.target.value)}
+            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -88,7 +146,7 @@ export default function BookingsPage() {
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
-            <Select>
+            <Select value={propertyFilter} onValueChange={setPropertyFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Property" />
               </SelectTrigger>
@@ -99,18 +157,6 @@ export default function BookingsPage() {
                     {prop.name}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Source" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Sources</SelectItem>
-                <SelectItem value="website">Website</SelectItem>
-                <SelectItem value="airbnb">Airbnb</SelectItem>
-                <SelectItem value="booking">Booking.com</SelectItem>
-                <SelectItem value="manual">Manual</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -135,7 +181,6 @@ export default function BookingsPage() {
                     <TableHead>Property</TableHead>
                     <TableHead>Check-in</TableHead>
                     <TableHead>Check-out</TableHead>
-                    <TableHead>Source</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Actions</TableHead>
@@ -152,7 +197,6 @@ export default function BookingsPage() {
                         <TableCell>{property?.name || "Unknown"}</TableCell>
                         <TableCell>{new Date(booking.check_in).toLocaleDateString()}</TableCell>
                         <TableCell>{new Date(booking.check_out).toLocaleDateString()}</TableCell>
-                        <TableCell className="capitalize">{booking.source}</TableCell>
                         <TableCell>
                           <Badge
                             variant={

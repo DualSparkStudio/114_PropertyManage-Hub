@@ -22,10 +22,27 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { getAllRooms } from "@/lib/supabase/rooms"
+import { Button } from "@/components/ui/button"
+import { Edit } from "lucide-react"
+import { getAllRooms, updateRoom } from "@/lib/supabase/rooms"
 import { getAllProperties, getAllRoomTypes } from "@/lib/supabase/properties"
 import type { Room } from "@/lib/types/database"
 import type { Property, RoomType } from "@/lib/types/database"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface RoomDisplay {
   id: string
@@ -42,6 +59,9 @@ export default function RoomsPage() {
   const [rooms, setRooms] = useState<RoomDisplay[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
+  const [editingRoom, setEditingRoom] = useState<RoomDisplay | null>(null)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editStatus, setEditStatus] = useState<string>("available")
 
   useEffect(() => {
     async function fetchData() {
@@ -189,7 +209,7 @@ export default function RoomsPage() {
                     <TableHead>Property</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Source</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -202,9 +222,9 @@ export default function RoomsPage() {
                         <Badge
                           variant={
                             room.status === "available"
-                              ? "success"
+                              ? "default"
                               : room.status === "occupied"
-                              ? "warning"
+                              ? "secondary"
                               : "destructive"
                           }
                         >
@@ -212,9 +232,21 @@ export default function RoomsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={room.isFromRoomTypes ? "secondary" : "default"}>
-                          {room.isFromRoomTypes ? "From Room Types" : "Individual Room"}
-                        </Badge>
+                        {!room.isFromRoomTypes ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingRoom(room)
+                              setEditStatus(room.status)
+                              setEditDialogOpen(true)
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Auto-generated</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -224,6 +256,65 @@ export default function RoomsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Room Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Room</DialogTitle>
+            <DialogDescription>
+              Update the status of {editingRoom?.room_number}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <Select value={editStatus} onValueChange={setEditStatus}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="available">Available</SelectItem>
+                  <SelectItem value="occupied">Occupied</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="cleaning">Cleaning</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditDialogOpen(false)
+                setEditingRoom(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (editingRoom && !editingRoom.isFromRoomTypes) {
+                  try {
+                    await updateRoom(editingRoom.id, { status: editStatus as any })
+                    // Update local state
+                    setRooms(rooms.map(r => 
+                      r.id === editingRoom.id ? { ...r, status: editStatus } : r
+                    ))
+                    setEditDialogOpen(false)
+                    setEditingRoom(null)
+                  } catch (error) {
+                    console.error("Error updating room:", error)
+                    alert("Failed to update room. Please try again.")
+                  }
+                }
+              }}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   )
 }

@@ -23,8 +23,9 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit } from "lucide-react"
-import { getAllRooms, updateRoom } from "@/lib/supabase/rooms"
+import { Edit, Eye, Trash2 } from "lucide-react"
+import { getAllRooms, updateRoom, createRoom, deleteRoom } from "@/lib/supabase/rooms"
+import { useRouter } from "next/navigation"
 import { getAllProperties, getAllRoomTypes } from "@/lib/supabase/properties"
 import type { Room } from "@/lib/types/database"
 import type { Property, RoomType } from "@/lib/types/database"
@@ -36,6 +37,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface RoomDisplay {
   id: string
@@ -49,12 +60,17 @@ interface RoomDisplay {
 }
 
 export default function RoomsPage() {
+  const router = useRouter()
   const [rooms, setRooms] = useState<RoomDisplay[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [editingRoom, setEditingRoom] = useState<RoomDisplay | null>(null)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editStatus, setEditStatus] = useState<string>("available")
+  const [viewingRoom, setViewingRoom] = useState<RoomDisplay | null>(null)
+  const [viewDialogOpen, setViewDialogOpen] = useState(false)
+  const [deletingRoom, setDeletingRoom] = useState<RoomDisplay | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -225,21 +241,61 @@ export default function RoomsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {!room.isFromRoomTypes ? (
+                        <div className="flex items-center gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              setEditingRoom(room)
-                              setEditStatus(room.status)
-                              setEditDialogOpen(true)
+                              setViewingRoom(room)
+                              setViewDialogOpen(true)
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              if (room.isFromRoomTypes) {
+                                // For auto-generated rooms, create an actual room record first
+                                try {
+                                  const newRoom = await createRoom({
+                                    property_id: room.property_id,
+                                    room_type_id: room.room_type_id,
+                                    room_number: room.room_number,
+                                    status: room.status as any,
+                                  })
+                                  // Update the room in the list to mark it as no longer auto-generated
+                                  setRooms(rooms.map(r => 
+                                    r.id === room.id ? { ...r, id: newRoom.id, isFromRoomTypes: false } : r
+                                  ))
+                                  setEditingRoom({ ...room, id: newRoom.id, isFromRoomTypes: false })
+                                  setEditStatus(room.status)
+                                  setEditDialogOpen(true)
+                                } catch (error) {
+                                  console.error("Error creating room:", error)
+                                  alert("Failed to create room. Please try again.")
+                                }
+                              } else {
+                                setEditingRoom(room)
+                                setEditStatus(room.status)
+                                setEditDialogOpen(true)
+                              }
                             }}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">Auto-generated</span>
-                        )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setDeletingRoom(room)
+                              setDeleteDialogOpen(true)
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -287,7 +343,7 @@ export default function RoomsPage() {
             </Button>
             <Button
               onClick={async () => {
-                if (editingRoom && !editingRoom.isFromRoomTypes) {
+                if (editingRoom) {
                   try {
                     await updateRoom(editingRoom.id, { status: editStatus as any })
                     // Update local state
@@ -308,6 +364,136 @@ export default function RoomsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* View Room Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Room Details</DialogTitle>
+            <DialogDescription>
+              View details for {viewingRoom?.room_number}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Room Number</label>
+              <p className="text-sm font-medium mt-1">{viewingRoom?.room_number}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Property</label>
+              <p className="text-sm font-medium mt-1">{viewingRoom?.property_name}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Room Type</label>
+              <p className="text-sm font-medium mt-1">{viewingRoom?.room_type_name}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Status</label>
+              <div className="mt-1">
+                <Badge
+                  variant={
+                    viewingRoom?.status === "available"
+                      ? "default"
+                      : viewingRoom?.status === "occupied"
+                      ? "secondary"
+                      : "destructive"
+                  }
+                >
+                  {viewingRoom?.status?.charAt(0).toUpperCase() + viewingRoom?.status?.slice(1)}
+                </Badge>
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Type</label>
+              <p className="text-sm font-medium mt-1">
+                {viewingRoom?.isFromRoomTypes ? "Auto-generated from Room Type" : "Individual Room"}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setViewDialogOpen(false)
+                setViewingRoom(null)
+              }}
+            >
+              Close
+            </Button>
+            {viewingRoom?.property_id && (
+              <Button
+                onClick={() => {
+                  router.push(`/properties/${viewingRoom.property_id}`)
+                }}
+              >
+                View Property
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Room Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Room</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deletingRoom?.isFromRoomTypes ? (
+                <>
+                  This is an auto-generated room from a room type. To remove it, you need to edit the room type and reduce the number of rooms.
+                  <br /><br />
+                  Would you like to navigate to the property to edit the room type?
+                </>
+              ) : (
+                <>
+                  Are you sure you want to delete {deletingRoom?.room_number}? This action cannot be undone.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setDeleteDialogOpen(false)
+              setDeletingRoom(null)
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            {deletingRoom?.isFromRoomTypes ? (
+              <AlertDialogAction
+                onClick={() => {
+                  if (deletingRoom?.property_id) {
+                    router.push(`/properties/${deletingRoom.property_id}`)
+                  }
+                  setDeleteDialogOpen(false)
+                  setDeletingRoom(null)
+                }}
+              >
+                Go to Property
+              </AlertDialogAction>
+            ) : (
+              <AlertDialogAction
+                onClick={async () => {
+                  if (deletingRoom) {
+                    try {
+                      await deleteRoom(deletingRoom.id)
+                      setRooms(rooms.filter(r => r.id !== deletingRoom.id))
+                      setDeleteDialogOpen(false)
+                      setDeletingRoom(null)
+                    } catch (error) {
+                      console.error("Error deleting room:", error)
+                      alert("Failed to delete room. Please try again.")
+                    }
+                  }
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   )
 }

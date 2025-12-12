@@ -6,7 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Bed, Users, Square } from "lucide-react"
+import { Bed, Users, Square, ChevronLeft, ChevronRight } from "lucide-react"
 import { getPropertyById, getPropertyRoomTypes, getRoomTypeImages } from "@/lib/supabase/properties"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
@@ -52,9 +52,17 @@ export function PropertyRoomsClient({ propertyId }: PropertyRoomsClientProps) {
             rooms.map(async (rt) => {
               try {
                 const roomImages = await getRoomTypeImages(rt.id)
+                // If we have images from room_type_images table, use them
+                if (roomImages && roomImages.length > 0) {
+                  return {
+                    ...rt,
+                    image_urls: roomImages.map(img => convertGoogleDriveUrl(img.url)),
+                  }
+                }
+                // Otherwise, fallback to single image_url field
                 return {
                   ...rt,
-                  image_urls: roomImages.map(img => convertGoogleDriveUrl(img.url)),
+                  image_urls: rt.image_url ? [convertGoogleDriveUrl(rt.image_url)] : [],
                 }
               } catch {
                 return {
@@ -131,20 +139,42 @@ export function PropertyRoomsClient({ propertyId }: PropertyRoomsClientProps) {
         ) : (
           <div className="space-y-6">
             {roomTypes.map((room) => {
-              const roomImage = room.image_urls && room.image_urls.length > 0 
-                ? convertGoogleDriveUrl(room.image_urls[0])
-                : room.image_url ? convertGoogleDriveUrl(room.image_url) : "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"
+              const allImages = room.image_urls && room.image_urls.length > 0 
+                ? room.image_urls.map(img => convertGoogleDriveUrl(img))
+                : room.image_url 
+                  ? [convertGoogleDriveUrl(room.image_url)] 
+                  : ["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"]
               
               return (
                 <Card key={room.id}>
                   <div className="flex flex-col md:flex-row gap-6 p-6">
-                    <div className="relative h-64 md:h-48 md:w-64 rounded-lg overflow-hidden">
-                      <Image
-                        src={roomImage}
-                        alt={room.name}
-                        fill
-                        className="object-cover"
-                      />
+                    {/* Image Gallery */}
+                    <div className="md:w-64 space-y-2">
+                      <div className="relative h-64 md:h-48 rounded-lg overflow-hidden">
+                        <img
+                          src={allImages[0]}
+                          alt={room.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      {allImages.length > 1 && (
+                        <div className="grid grid-cols-4 gap-2">
+                          {allImages.slice(1, 5).map((img, idx) => (
+                            <div key={idx} className="relative h-16 rounded overflow-hidden">
+                              <img
+                                src={img}
+                                alt={`${room.name} ${idx + 2}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ))}
+                          {allImages.length > 5 && (
+                            <div className="relative h-16 rounded overflow-hidden bg-muted flex items-center justify-center">
+                              <span className="text-xs text-muted-foreground">+{allImages.length - 5}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1">
                       <h3 className="text-2xl font-semibold mb-4">{room.name}</h3>
@@ -170,11 +200,18 @@ export function PropertyRoomsClient({ propertyId }: PropertyRoomsClientProps) {
                           <span className="text-3xl font-bold">₹{room.price}</span>
                           <span className="text-sm text-muted-foreground">/night</span>
                         </div>
-                        <Button asChild>
-                          <Link href={`/checkout?property=${propertyId}&roomType=${room.id}&roomName=${encodeURIComponent(room.name)}&roomPrice=${room.price}`}>
-                            Book Now
-                          </Link>
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button variant="outline" asChild>
+                            <Link href={`/property/${propertyId}/room/${room.id}`}>
+                              View Details
+                            </Link>
+                          </Button>
+                          <Button asChild>
+                            <Link href={`/checkout?property=${propertyId}&roomType=${room.id}&roomName=${encodeURIComponent(room.name)}&roomPrice=${room.price}`}>
+                              Book Now
+                            </Link>
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>

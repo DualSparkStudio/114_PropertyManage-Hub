@@ -399,7 +399,7 @@ export default function RoomsPage() {
                       : "destructive"
                   }
                 >
-                  {viewingRoom?.status?.charAt(0).toUpperCase() + viewingRoom?.status?.slice(1)}
+                  {viewingRoom?.status ? (viewingRoom.status.charAt(0).toUpperCase() + viewingRoom.status.slice(1)) : 'Unknown'}
                 </Badge>
               </div>
             </div>

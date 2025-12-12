@@ -253,42 +253,41 @@ export default function AdminDashboardPage() {
             value={stats.totalProperties}
             icon={Building2}
             change={`${stats.totalProperties} total`}
-            trend="neutral"
           />
           <StatsCard
             title="Bookings Today"
             value={stats.bookingsToday}
             icon={CalendarCheck}
             change={stats.bookingsTodayChange}
-            trend={stats.bookingsToday > 0 ? "up" : "neutral"}
+            trend={stats.bookingsToday > 0 ? "up" : undefined}
           />
           <StatsCard
             title="Occupancy Rate"
             value={`${stats.occupancyRate}%`}
             icon={TrendingUp}
             change={stats.occupancyChange}
-            trend={stats.occupancyRate > 50 ? "up" : stats.occupancyRate > 0 ? "neutral" : "down"}
+            trend={stats.occupancyRate > 50 ? "up" : stats.occupancyRate > 0 ? undefined : "down"}
           />
           <StatsCard
             title="Revenue (Month)"
             value={`$${stats.monthlyRevenue.toLocaleString()}`}
             icon={DollarSign}
             change={stats.revenueChange}
-            trend={stats.monthlyRevenue > 0 ? "up" : "neutral"}
+            trend={stats.monthlyRevenue > 0 ? "up" : undefined}
           />
           <StatsCard
             title="Pending Check-ins"
             value={stats.pendingCheckIns}
             icon={Clock}
             change={`${stats.pendingCheckIns} upcoming`}
-            trend={stats.pendingCheckIns > 0 ? "up" : "neutral"}
+            trend={stats.pendingCheckIns > 0 ? "up" : undefined}
           />
           <StatsCard
             title="Pending Check-outs"
             value={stats.pendingCheckOuts}
             icon={Users}
             change={`${stats.pendingCheckOuts} upcoming`}
-            trend={stats.pendingCheckOuts > 0 ? "up" : "neutral"}
+            trend={stats.pendingCheckOuts > 0 ? "up" : undefined}
           />
         </div>
 

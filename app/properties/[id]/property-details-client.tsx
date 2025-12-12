@@ -401,80 +401,49 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
   // Calculate actual total rooms from room types
   const actualTotalRooms = roomTypes.reduce((sum, rt) => sum + (rt.number_of_rooms || 1), 0)
 
+  const handleAddImage = () => {
+    if (!imageDialogUrl.trim() || !imageDialogContext) return
+
+    const trimmedUrl = imageDialogUrl.trim()
+
+    if (imageDialogContext.type === 'room' && imageDialogContext.roomIndex !== undefined) {
+      const updated = [...roomTypes]
+      if (!updated[imageDialogContext.roomIndex].image_urls) {
+        updated[imageDialogContext.roomIndex].image_urls = []
+      }
+      updated[imageDialogContext.roomIndex].image_urls = [
+        ...(updated[imageDialogContext.roomIndex].image_urls || []),
+        trimmedUrl
+      ]
+      setRoomTypes(updated)
+    } else if (imageDialogContext.type === 'gallery') {
+      setGalleryImages([...galleryImages, trimmedUrl])
+    } else if (imageDialogContext.type === 'property') {
+      setHeroImage(trimmedUrl)
+      // Update galleryImages[0] to match heroImage to keep them in sync
+      if (galleryImages.length > 0) {
+        const updatedGallery = [...galleryImages]
+        updatedGallery[0] = trimmedUrl
+        setGalleryImages(updatedGallery)
+      } else {
+        // If no gallery images, create one with the hero image
+        setGalleryImages([trimmedUrl])
+      }
+    }
+
+    setImageDialogOpen(false)
+    setImageDialogUrl("")
+    setImageDialogContext(null)
+  }
+
   if (loading) {
     return (
       <MainLayout>
         <div className="text-center py-12">
           <p className="text-muted-foreground">Loading property details...</p>
         </div>
-
-        {/* Image URL Dialog */}
-        <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>
-                {imageDialogContext?.type === 'room' ? 'Add Room Image' : imageDialogContext?.type === 'gallery' ? 'Add Gallery Image' : 'Add Image'}
-              </DialogTitle>
-              <DialogDescription>
-                Enter the image URL. You can use Google Drive links or any direct image URL.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <Input
-                placeholder="https://drive.google.com/file/d/..."
-                value={imageDialogUrl}
-                onChange={(e) => setImageDialogUrl(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleAddImage()
-                  }
-                }}
-                autoFocus
-              />
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setImageDialogOpen(false)
-                  setImageDialogUrl("")
-                  setImageDialogContext(null)
-                }}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleAddImage}>
-                Add Image
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </MainLayout>
     )
-
-    function handleAddImage() {
-      if (!imageDialogUrl.trim() || !imageDialogContext) return
-
-      if (imageDialogContext.type === 'room' && imageDialogContext.roomIndex !== undefined) {
-        const updated = [...roomTypes]
-        if (!updated[imageDialogContext.roomIndex].image_urls) {
-          updated[imageDialogContext.roomIndex].image_urls = []
-        }
-        updated[imageDialogContext.roomIndex].image_urls = [
-          ...(updated[imageDialogContext.roomIndex].image_urls || []),
-          imageDialogUrl.trim()
-        ]
-        setRoomTypes(updated)
-      } else if (imageDialogContext.type === 'gallery') {
-        setGalleryImages([...galleryImages, imageDialogUrl.trim()])
-      } else if (imageDialogContext.type === 'property') {
-        setHeroImage(imageDialogUrl.trim())
-      }
-
-      setImageDialogOpen(false)
-      setImageDialogUrl("")
-      setImageDialogContext(null)
-    }
   }
 
   return (
@@ -1385,6 +1354,48 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Image URL Dialog */}
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {imageDialogContext?.type === 'room' ? 'Add Room Image' : imageDialogContext?.type === 'gallery' ? 'Add Gallery Image' : imageDialogContext?.type === 'property' ? 'Change Property Image' : 'Add Image'}
+            </DialogTitle>
+            <DialogDescription>
+              Enter the image URL. You can use Google Drive links or any direct image URL.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder="https://drive.google.com/file/d/..."
+              value={imageDialogUrl}
+              onChange={(e) => setImageDialogUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleAddImage()
+                }
+              }}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setImageDialogOpen(false)
+                setImageDialogUrl("")
+                setImageDialogContext(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleAddImage}>
+              Add Image
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   )
 }

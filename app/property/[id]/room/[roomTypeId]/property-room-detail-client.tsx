@@ -57,31 +57,41 @@ export function PropertyRoomDetailClient({ propertyId, roomTypeId }: PropertyRoo
   useEffect(() => {
     async function fetchData() {
       try {
-        // Extract IDs from URL path
-        let propId = propertyId
-        let roomId = roomTypeId
+        // Extract IDs from URL path - always extract from URL to ensure we get correct values
+        let propId = ''
+        let roomId = ''
         
-        if (!propId && typeof window !== 'undefined') {
+        if (typeof window !== 'undefined') {
           const pathParts = pathname.split('/').filter(Boolean)
+          // Path structure: /property/[id]/room/[roomTypeId]
           const propertyIndex = pathParts.indexOf('property')
           if (propertyIndex !== -1 && pathParts[propertyIndex + 1]) {
             propId = pathParts[propertyIndex + 1]
+            // Check if next part is 'room' and get roomTypeId
+            if (pathParts[propertyIndex + 2] === 'room' && pathParts[propertyIndex + 3]) {
+              roomId = pathParts[propertyIndex + 3]
+            }
           }
         }
         
-        if (!roomId && typeof window !== 'undefined') {
-          const pathParts = pathname.split('/').filter(Boolean)
-          const roomIndex = pathParts.indexOf('room')
-          if (roomIndex !== -1 && pathParts[roomIndex + 1]) {
-            roomId = pathParts[roomIndex + 1]
-          }
-        }
+        // Fallback to props if URL extraction didn't work
+        if (!propId) propId = propertyId
+        if (!roomId) roomId = roomTypeId
         
         if (!propId || !roomId) {
-          console.error("Property ID or Room Type ID not found")
+          console.error("Property ID or Room Type ID not found", { 
+            propId, 
+            roomId, 
+            pathname, 
+            propertyId, 
+            roomTypeId,
+            pathParts: typeof window !== 'undefined' ? pathname.split('/').filter(Boolean) : []
+          })
           setLoading(false)
           return
         }
+        
+        console.log('Fetching room details:', { propId, roomId })
         
         const prop = await getPropertyById(propId)
         if (prop) {

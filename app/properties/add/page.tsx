@@ -380,19 +380,6 @@ export default function AddPropertyPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Base Price per Night *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      value={formData.price}
-                      onChange={(e) => handleInputChange("price", e.target.value)}
-                      placeholder="150"
-                      min="0"
-                      step="0.01"
-                      required
-                    />
-                  </div>
                 </CardContent>
               </Card>
 

@@ -19,8 +19,7 @@ import { MapPin, Bed, Star, Search } from "lucide-react"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
 import { Breadcrumb } from "@/components/ui/breadcrumb"
-import { getAllProperties, getPropertyImages } from "@/lib/supabase/properties"
-import { convertGoogleDriveUrl } from "@/lib/utils/convert-google-drive-url"
+import { getAllProperties, getPropertyImages } from "@/lib/data/mock-data-helpers"
 
 // Memoized property card component
 const PropertyCard = memo(function PropertyCard({ property }: { property: any }) {
@@ -29,7 +28,7 @@ const PropertyCard = memo(function PropertyCard({ property }: { property: any })
       <div className="relative h-48 w-full bg-muted">
         {property.image ? (
           <Image
-            src={convertGoogleDriveUrl(property.image)}
+            src={property.image}
             alt={property.name}
             fill
             className="object-cover"
@@ -111,7 +110,7 @@ export default function ExplorePage() {
         setAllLocations(locations)
         setAllTypes(types)
         
-        // Fetch images for each property - show all properties even without images or rooms
+        // Fetch images for each property
         const propertiesWithImages = await Promise.all(
           data.map(async (property) => {
             const images = await getPropertyImages(property.id)
@@ -123,12 +122,11 @@ export default function ExplorePage() {
               price: property.price,
               rating: property.rating,
               reviews: property.reviews,
-              image: images[0]?.url ? convertGoogleDriveUrl(images[0].url) : null,
+              image: images[0]?.url || property.image || null,
               description: property.description || "",
             }
           })
         )
-        // Show all properties regardless of images or room count
         setProperties(propertiesWithImages)
       } catch (error) {
         console.error("Error fetching properties:", error)

@@ -10,11 +10,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Bed, Users, Wifi, Car, Star, Home, Mountain, Sparkles, Info, Phone, Share2 } from "lucide-react"
-import { getPropertyById, getPropertyImages, getPropertyRoomTypes } from "@/lib/supabase/properties"
+import { getPropertyById, getPropertyImages, getPropertyRoomTypes } from "@/lib/data/mock-data-helpers"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
 import { Breadcrumb } from "@/components/ui/breadcrumb"
-import { convertGoogleDriveUrl } from "@/lib/utils/convert-google-drive-url"
 import type { Property, RoomType } from "@/lib/types/database"
 
 interface PropertyHomeClientProps {
@@ -49,11 +48,7 @@ export function PropertyHomeClient({ propertyId }: PropertyHomeClientProps) {
           if (prop) {
             setProperty(prop)
             const propertyImages = await getPropertyImages(prop.id)
-            const convertedImages = propertyImages.map(img => {
-              const converted = convertGoogleDriveUrl(img.url)
-              console.log('Image URL conversion:', { original: img.url, converted })
-              return converted
-            })
+            const convertedImages = propertyImages.map(img => img.url)
             setImages(convertedImages)
             const rooms = await getPropertyRoomTypes(prop.id)
             setRoomTypes(rooms)

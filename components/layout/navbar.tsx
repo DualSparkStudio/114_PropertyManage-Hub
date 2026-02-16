@@ -89,12 +89,6 @@ export function Navbar({ variant = "explore", propertyId, onLogoClick }: NavbarP
                   >
                     Explore
                   </OptimizedLink>
-                  <OptimizedLink 
-                    href="/admin" 
-                    className="text-sm font-semibold px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                  >
-                    Admin
-                  </OptimizedLink>
                 </nav>
 
                 {/* Mobile Menu Button */}
@@ -142,13 +136,6 @@ export function Navbar({ variant = "explore", propertyId, onLogoClick }: NavbarP
                           className="block py-3 px-4 rounded-lg text-base font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                         >
                           Explore
-                        </OptimizedLink>
-                        <OptimizedLink
-                          href="/admin"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="block py-3 px-4 rounded-lg text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                        >
-                          Admin
                         </OptimizedLink>
                       </div>
                     </nav>
@@ -228,12 +215,6 @@ export function Navbar({ variant = "explore", propertyId, onLogoClick }: NavbarP
                 >
                   Explore
                 </OptimizedLink>
-                <OptimizedLink 
-                  href="/admin" 
-                  className="text-sm font-semibold px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                >
-                  Admin
-                </OptimizedLink>
               </nav>
 
               {/* Mobile Menu Button */}
@@ -281,13 +262,6 @@ export function Navbar({ variant = "explore", propertyId, onLogoClick }: NavbarP
                         className="block py-3 px-4 rounded-lg text-base font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                       >
                         Explore
-                      </OptimizedLink>
-                      <OptimizedLink
-                        href="/admin"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block py-3 px-4 rounded-lg text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                      >
-                        Admin
                       </OptimizedLink>
                     </div>
                   </nav>

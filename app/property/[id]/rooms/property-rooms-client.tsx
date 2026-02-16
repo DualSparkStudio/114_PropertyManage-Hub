@@ -7,11 +7,10 @@ import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Bed, Users, Square, ChevronLeft, ChevronRight } from "lucide-react"
-import { getPropertyById, getPropertyRoomTypes, getRoomTypeImages } from "@/lib/supabase/properties"
+import { getPropertyById, getPropertyRoomTypes } from "@/lib/data/mock-data-helpers"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
 import { Breadcrumb } from "@/components/ui/breadcrumb"
-import { convertGoogleDriveUrl } from "@/lib/utils/convert-google-drive-url"
 import type { Property, RoomType } from "@/lib/types/database"
 
 interface PropertyRoomsClientProps {
@@ -47,31 +46,11 @@ export function PropertyRoomsClient({ propertyId }: PropertyRoomsClientProps) {
         if (prop) {
           setProperty(prop)
           const rooms = await getPropertyRoomTypes(prop.id)
-          // Fetch images for each room type
-          const roomsWithImages = await Promise.all(
-            rooms.map(async (rt) => {
-              try {
-                const roomImages = await getRoomTypeImages(rt.id)
-                // If we have images from room_type_images table, use them
-                if (roomImages && roomImages.length > 0) {
-                  return {
-                    ...rt,
-                    image_urls: roomImages.map(img => convertGoogleDriveUrl(img.url)),
-                  }
-                }
-                // Otherwise, fallback to single image_url field
-                return {
-                  ...rt,
-                  image_urls: rt.image_url ? [convertGoogleDriveUrl(rt.image_url)] : [],
-                }
-              } catch {
-                return {
-                  ...rt,
-                  image_urls: rt.image_url ? [convertGoogleDriveUrl(rt.image_url)] : [],
-                }
-              }
-            })
-          )
+          // Map images from mock data
+          const roomsWithImages = rooms.map((rt) => ({
+            ...rt,
+            image_urls: rt.images || [],
+          }))
           setRoomTypes(roomsWithImages)
         }
       } catch (error) {
@@ -140,10 +119,8 @@ export function PropertyRoomsClient({ propertyId }: PropertyRoomsClientProps) {
           <div className="space-y-6">
             {roomTypes.map((room) => {
               const allImages = room.image_urls && room.image_urls.length > 0 
-                ? room.image_urls.map(img => convertGoogleDriveUrl(img))
-                : room.image_url 
-                  ? [convertGoogleDriveUrl(room.image_url)] 
-                  : ["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"]
+                ? room.image_urls
+                : ["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"]
               
               return (
                 <Card key={room.id}>

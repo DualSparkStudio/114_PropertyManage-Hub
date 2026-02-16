@@ -1,5 +1,5 @@
 import { PropertyRoomDetailClient } from "./property-room-detail-client"
-import { getAllProperties } from "@/lib/supabase/properties"
+import { getAllProperties, getPropertyRoomTypes } from "@/lib/data/mock-data-helpers"
 
 export async function generateStaticParams() {
   try {
@@ -9,12 +9,10 @@ export async function generateStaticParams() {
       return [{ id: '_', roomTypeId: '_' }]
     }
     // Generate routes for all properties and their room types
-    // This ensures the route exists for static export
     const params: { id: string; roomTypeId: string }[] = []
     
     for (const property of properties) {
       try {
-        const { getPropertyRoomTypes } = await import('@/lib/supabase/properties')
         const roomTypes = await getPropertyRoomTypes(property.id)
         if (roomTypes.length > 0) {
           // Add a route for each room type

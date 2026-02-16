@@ -1,5 +1,5 @@
 import { PropertyRoomsClient } from "./property-rooms-client"
-import { getAllProperties } from "@/lib/supabase/properties"
+import { getAllProperties } from "@/lib/data/mock-data-helpers"
 
 export async function generateStaticParams() {
   try {

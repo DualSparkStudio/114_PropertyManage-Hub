@@ -13,10 +13,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { StatsCard } from "@/components/reusable/stats-card"
 import { Bed, DollarSign, TrendingUp, Image as ImageIcon, Edit, Save, X, Power, PowerOff, Plus } from "lucide-react"
 import Image from "next/image"
-import { updateProperty, getPropertyById, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType, getRoomTypeImages, upsertRoomTypeImages, updatePropertyStatus, getPropertyContact } from "@/lib/supabase/properties"
-import { calculateOccupancy, getBookingStats } from "@/lib/supabase/bookings"
-import { supabase } from "@/lib/supabase/client"
-import { convertGoogleDriveUrl } from "@/lib/utils/convert-google-drive-url"
+import { updateProperty, getPropertyById, getPropertyImages, getPropertyRoomTypes, getPropertyFeatures, upsertRoomType, deleteRoomType, updatePropertyStatus, getPropertyContact } from "@/lib/data/mock-data-helpers"
+import { calculateOccupancy, getBookingStats } from "@/lib/data/mock-data-helpers"
 import type { RoomType, Feature, PropertyContact } from "@/lib/types/database"
 import {
   Table,
@@ -129,49 +127,12 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           getPropertyFeatures(property.id),
         ])
         
-        // Fetch images for each room type
-        const roomTypesWithImages = await Promise.all(
-          roomTypesData.map(async (rt) => {
-            try {
-              const roomImages = await getRoomTypeImages(rt.id)
-              // If we have images from room_type_images table, use them
-              if (roomImages && roomImages.length > 0) {
-                const convertedImages = roomImages.map(img => convertGoogleDriveUrl(img.url))
-                console.log(`Room type ${rt.id} (${rt.name}): Found ${roomImages.length} images from room_type_images table`)
-                return {
-                  ...rt,
-                  image_urls: convertedImages,
-                }
-              }
-              // Otherwise, fallback to single image_url field
-              const fallbackImages = rt.image_url ? [convertGoogleDriveUrl(rt.image_url)] : []
-              if (fallbackImages.length > 0) {
-                console.log(`Room type ${rt.id} (${rt.name}): Using fallback image_url field`)
-              } else {
-                console.log(`Room type ${rt.id} (${rt.name}): No images found`)
-              }
-              return {
-                ...rt,
-                image_urls: fallbackImages,
-              }
-            } catch (error: any) {
-              // Fallback to single image_url if room_type_images table doesn't exist yet
-              // Handle PGRST205 (table not found) and other expected errors silently
-              if (error?.code === 'PGRST205' || error?.code === 'PGRST116' || error?.message?.includes('schema cache') || error?.message?.includes('does not exist')) {
-                console.log(`Room type ${rt.id} (${rt.name}): room_type_images table not found, using image_url field`)
-                return {
-                  ...rt,
-                  image_urls: rt.image_url ? [convertGoogleDriveUrl(rt.image_url)] : [],
-                }
-              }
-              // Re-throw unexpected errors
-              console.error(`Error fetching images for room type ${rt.id}:`, error)
-              throw error
-            }
-          })
-        )
+        // Map room types with images from mock data
+        const roomTypesWithImages = roomTypesData.map((rt) => ({
+          ...rt,
+          image_urls: rt.images || [],
+        }))
         
-        // Calculate actual total rooms from room types (ONLY from room types, no static fallback)
         const actualTotalRooms = roomTypesWithImages.reduce((sum, rt) => sum + (rt.number_of_rooms || 1), 0)
         
         setPropertyData({
@@ -184,8 +145,8 @@ export function PropertyDetailsClient({ propertyId }: PropertyDetailsClientProps
           price: property.price,
           status: (property.status as 'active' | 'inactive') || 'active',
         })
-        setHeroImage(images[0]?.url ? convertGoogleDriveUrl(images[0].url) : "")
-        setGalleryImages(images.map(img => convertGoogleDriveUrl(img.url)))
+        setHeroImage(images[0]?.url || "")
+        setGalleryImages(images.map(img => img.url))
         setRoomTypes(roomTypesWithImages)
         setAmenities(property.amenities || [])
         setFeatures(featuresData)

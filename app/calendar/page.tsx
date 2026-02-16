@@ -9,9 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react"
 import { useState, useEffect } from "react"
 import { format, startOfWeek, addDays, addWeeks, subWeeks, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, parseISO } from "date-fns"
-import { getBookingsWithDetails } from "@/lib/supabase/bookings"
-import { getAllProperties, getPropertyRoomTypes } from "@/lib/supabase/properties"
-import { checkPropertyAvailability } from "@/lib/supabase/bookings"
+import { getBookingsWithDetails, getAllProperties, getPropertyRoomTypes, checkPropertyAvailability } from "@/lib/data/mock-data-helpers"
 import type { BookingWithDetails } from "@/lib/types/database"
 import type { Property } from "@/lib/types/database"
 
@@ -56,18 +54,17 @@ export default function CalendarPage() {
 
         // Transform bookings for calendar display
         const calendarBookings: CalendarBooking[] = bookingsData
-          .filter((b) => b.status === "confirmed" || b.status === "pending")
-          .map((booking) => {
-            const property = booking.property as any
+          .filter((b: any) => b.status === "confirmed" || b.status === "pending")
+          .map((booking: any) => {
             return {
               id: booking.id,
               guest: booking.guest_name,
-              property: property?.name || "Unknown",
+              property: booking.property_name || "Unknown",
               propertyId: booking.property_id,
               checkIn: parseISO(booking.check_in),
               checkOut: parseISO(booking.check_out),
-              source: booking.source,
-              color: sourceColors[booking.source] || "#6b7280",
+              source: "website",
+              color: "#3b82f6",
               status: booking.status,
             }
           })
@@ -301,26 +298,6 @@ export default function CalendarPage() {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Legend */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Booking Sources</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              {Object.entries(sourceColors).map(([source, color]) => (
-                <div key={source} className="flex items-center gap-2">
-                  <div
-                    className="w-4 h-4 rounded"
-                    style={{ backgroundColor: color }}
-                  />
-                  <span className="text-sm capitalize">{source}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Property Availability Status */}
         {loading ? null : (

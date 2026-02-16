@@ -1,5 +1,5 @@
 import { PropertyHomeClient } from "./property-home-client"
-import { getAllProperties } from "@/lib/supabase/properties"
+import { getAllProperties } from "@/lib/data/mock-data-helpers"
 
 // Generate static params for static export
 // IMPORTANT: With static export, pages are generated at BUILD TIME

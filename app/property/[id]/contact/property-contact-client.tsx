@@ -7,8 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Phone, Mail, MapPin, Calendar } from "lucide-react"
-import { getPropertyById, getPropertyContact } from "@/lib/supabase/properties"
-import { supabase } from "@/lib/supabase/client"
+import { getPropertyById, getPropertyContact } from "@/lib/data/mock-data-helpers"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
 import { Breadcrumb } from "@/components/ui/breadcrumb"
@@ -126,27 +125,9 @@ export function PropertyContactClient({ propertyId }: PropertyContactClientProps
     e.preventDefault()
     if (!property) return
 
-    try {
-      // Save contact message to database
-      const { error } = await supabase
-        .from('contact_messages')
-        .insert({
-          property_id: property.id,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone || null,
-          message: formData.message,
-          status: 'new',
-        })
-
-      if (error) throw error
-
-      alert("Thank you for your message! We'll get back to you soon.")
-      setFormData({ name: "", email: "", phone: "", message: "" })
-    } catch (error) {
-      console.error("Error submitting contact form:", error)
-      alert("Failed to send message. Please try again.")
-    }
+    // Mock submission - just show success message
+    alert("Thank you for your message! We'll get back to you soon.")
+    setFormData({ name: "", email: "", phone: "", message: "" })
   }
 
   if (loading) {

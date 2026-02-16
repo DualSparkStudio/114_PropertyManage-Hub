@@ -46,11 +46,6 @@ const menuItems = [
     href: "/calendar",
   },
   {
-    title: "OTA Sync",
-    icon: RefreshCw,
-    href: "/ota-sync",
-  },
-  {
     title: "Rooms",
     icon: DoorOpen,
     href: "/rooms",

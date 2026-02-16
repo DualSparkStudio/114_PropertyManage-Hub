@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getPropertyById, getPropertyFeatures } from "@/lib/supabase/properties"
+import { getPropertyById, getPropertyFeatures } from "@/lib/data/mock-data-helpers"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
 import { Breadcrumb } from "@/components/ui/breadcrumb"

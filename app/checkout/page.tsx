@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { getPropertyById, getPropertyImages } from "@/lib/supabase/properties"
+import { getPropertyById, getPropertyImages } from "@/lib/data/mock-data-helpers"
 import type { Property } from "@/lib/types/database"
 
 function CheckoutContent() {
@@ -51,7 +51,7 @@ function CheckoutContent() {
 
   const nights = checkIn && checkOut && property
     ? Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24))
-    : 0
+    : 1 // Default to 1 night if dates not selected
   // Use room price if available, otherwise use property price
   const basePrice = roomPrice ? Number(roomPrice) : (property ? Number(property.price) : 0)
   const subtotal = nights * basePrice
@@ -66,10 +66,22 @@ function CheckoutContent() {
     specialRequests: "",
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [paymentProcessing, setPaymentProcessing] = useState(false)
+
+  // Always use demo mode - no Razorpay
+  const useDemoMode = true
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real app, you'd send this to your backend
-    router.push(`/confirmation?bookingId=${Date.now()}`)
+    setPaymentProcessing(true)
+
+    // Simulate payment processing
+    console.log('Processing demo payment...')
+    setTimeout(() => {
+      console.log('Payment successful!')
+      setPaymentProcessing(false)
+      router.push(`/confirmation?bookingId=${Date.now()}&paymentId=demo_${Date.now()}`)
+    }, 2000)
   }
 
   if (loading) {
@@ -186,9 +198,12 @@ function CheckoutContent() {
                         onChange={(e) => setFormData({ ...formData, specialRequests: e.target.value })}
                       />
                     </div>
-                    <Button type="submit" className="w-full" size="lg">
-                      Confirm Booking
+                    <Button type="submit" className="w-full" size="lg" disabled={paymentProcessing}>
+                      {paymentProcessing ? 'Processing Payment...' : 'Complete Booking'}
                     </Button>
+                    <p className="text-xs text-center text-muted-foreground mt-2">
+                      Demo mode - Payment simulation (no actual charge)
+                    </p>
                   </form>
                 </CardContent>
               </Card>

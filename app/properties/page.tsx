@@ -16,10 +16,7 @@ import {
 } from "@/components/ui/select"
 import { Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { getAllProperties, getPropertyImages, getPropertyRoomTypes } from "@/lib/supabase/properties"
-import { convertGoogleDriveUrl } from "@/lib/utils/convert-google-drive-url"
-import { calculateOccupancy } from "@/lib/supabase/bookings"
-import { supabase } from "@/lib/supabase/client"
+import { getAllProperties, getPropertyImages, getPropertyRoomTypes, calculateOccupancy } from "@/lib/data/mock-data-helpers"
 
 export default function PropertiesPage() {
   const router = useRouter()
@@ -50,7 +47,6 @@ export default function PropertiesPage() {
             getPropertyRoomTypes(property.id),
           ])
           
-          // Calculate actual total rooms from room types (ONLY from room types, no static fallback)
           const actualTotalRooms = roomTypes.reduce((sum, rt) => sum + (rt.number_of_rooms || 1), 0)
           
           const occupancy = await calculateOccupancy(property.id, actualTotalRooms)
@@ -61,7 +57,7 @@ export default function PropertiesPage() {
             location: property.location,
             rooms: actualTotalRooms,
             occupancy,
-            image: images[0]?.url ? convertGoogleDriveUrl(images[0].url) : '',
+            image: images[0]?.url || property.image || '',
             status: property.status || 'active',
           }
         })

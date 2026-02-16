@@ -31,11 +31,10 @@ import {
   MapPin,
   Star
 } from "lucide-react"
-import { getPropertyById, getPropertyRoomTypes, getRoomTypeImages } from "@/lib/supabase/properties"
+import { getPropertyById, getPropertyRoomTypes } from "@/lib/data/mock-data-helpers"
 import { Footer } from "@/components/layout/footer"
 import { Navbar } from "@/components/layout/navbar"
 import { Breadcrumb } from "@/components/ui/breadcrumb"
-import { convertGoogleDriveUrl } from "@/lib/utils/convert-google-drive-url"
 import type { Property, RoomType } from "@/lib/types/database"
 
 interface PropertyRoomDetailClientProps {
@@ -100,26 +99,10 @@ export function PropertyRoomDetailClient({ propertyId, roomTypeId }: PropertyRoo
           const room = roomTypes.find(rt => rt.id === roomId)
           
           if (room) {
-            // Fetch images for the room type
-            try {
-              const roomImages = await getRoomTypeImages(room.id)
-              if (roomImages && roomImages.length > 0) {
-                setRoomType({
-                  ...room,
-                  image_urls: roomImages.map(img => convertGoogleDriveUrl(img.url)),
-                })
-              } else {
-                setRoomType({
-                  ...room,
-                  image_urls: room.image_url ? [convertGoogleDriveUrl(room.image_url)] : [],
-                })
-              }
-            } catch {
-              setRoomType({
-                ...room,
-                image_urls: room.image_url ? [convertGoogleDriveUrl(room.image_url)] : [],
-              })
-            }
+            setRoomType({
+              ...room,
+              image_urls: room.images || [],
+            })
           }
         }
       } catch (error) {
@@ -164,9 +147,7 @@ export function PropertyRoomDetailClient({ propertyId, roomTypeId }: PropertyRoo
 
   const allImages = roomType.image_urls && roomType.image_urls.length > 0
     ? roomType.image_urls
-    : roomType.image_url
-      ? [convertGoogleDriveUrl(roomType.image_url)]
-      : ["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"]
+    : ["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800"]
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % allImages.length)
